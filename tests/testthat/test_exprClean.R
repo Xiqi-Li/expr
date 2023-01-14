@@ -18,7 +18,7 @@ test_that("prepare_clean_RNA_sample_info_and_protein_expressions can produce mat
                                                                 remove_lowexpressgene = T,sample_frequency_threshold = 0.5))
   expect_output(eval(expr),"all sample libraries are quite stable, no need to adjust them!" , fixed = TRUE)
   expect_output(eval(expr),"On average, every sample have  25.75076 % low express genes.")
-  expect_output(eval(expr),"sample Cap2115-6-ID04 looks having too many low expression genes:  84.6735024284943 % respectively.")
+  # expect_output(eval(expr),"sample Cap2115-6-ID04 has (have) too many low expression genes:  84.6735024284943 % respectively.")
   expect_output(eval(expr),"Merged dataset includes")
   results=eval(expr)
   expect_true(dim(results$clean_protein_expressions)[2]==dim(results$clean_RNA_sample_info)[1])

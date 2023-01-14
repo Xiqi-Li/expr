@@ -28,43 +28,43 @@ prepare_clean_RNA_sample_info_and_protein_expressions(
 )
 }
 \arguments{
-\item{RNA_sample_info}{\code{data.frame()}. RNA sample information table, must be provided and contain sample id column}
+\item{RNA_sample_info}{\code{data.frame()}.  RNA sample information table containing at least a sample id column, along with other information.}
 
-\item{sample_id_col}{\code{character()}. default ="Sample_ID",column name for sample_id column in RNA_sample info}
+\item{sample_id_col}{\code{character()}. Column name for sample_id column in RNA_sample info. Default set as "Sample_ID".}
 
-\item{expressions}{\code{data.frame()}. no default, gene expressions table,must be provided}
+\item{expressions}{\code{data.frame()}. Gene expression table.}
 
-\item{gene_id_col}{\code{character()}. default="rowname" if rownames of expressions are gene id, otherwise, provide a column name containing gene id}
+\item{gene_id_col}{\code{character()}. Use row names as gene id, otherwise, provide a column name containing gene id. Default set as "rowname".}
 
-\item{mark_library_size}{\code{logical(1)}. default TRUE, mark RNA sample information table with sample library size}
+\item{mark_library_size}{\code{logical(1)}. Mark RNA sample information table with sample library size. Default set as TRUE.}
 
-\item{adjusted_by_library_size}{\code{logical(1)}. default TRUE, normalize expressions with corresponding sample library size}
+\item{adjusted_by_library_size}{\code{logical(1)}. Normalize expressions with corresponding sample library size. Default set as TRUE.}
 
-\item{tolerant_library_size_factor}{\code{numeric()}. default=1.1, if maximal sample library size is over tolerant_library_size_factor multiple minimal sample library size, trigger normalization of expression by sample library size, otherwise keep unchanged}
+\item{tolerant_library_size_factor}{\code{numeric()}. When the ratio of maximal to minimal library size exceeds this threshold (default set as 1.1), trigger normalization expression by sample library size.}
 
-\item{protein_coding_ensemble2symbol_table}{\code{data.frame()}.  Protein coding gene table containing ensemble gene id and hugo symbol, used for extraction of protein coding expressions and convert ensemble gene id to hugo symbol}
+\item{protein_coding_ensemble2symbol_table}{\code{data.frame()}.  Protein-coding gene table containing ensemble gene id and hugo symbol, used for extraction of protein coding expressions and convert ensemble gene id to hugo symbol}
 
-\item{ens_id_col}{\code{character()}. default ="Gene_ID",column name for ensemble gene id column in protein coding ensemble2symbol table}
+\item{ens_id_col}{\code{character()}. Column name for ensemble gene id column in protein coding ensemble2symbol table. Default set as "Gene_ID".}
 
-\item{symbol_col}{\code{character()}. default ="Gene_Symbol",column name for hugo symbol column in protein coding ensemble2symbol table}
+\item{symbol_col}{\code{character()}. Column name for hugo symbol column in protein coding ensemble2symbol table. Default set as "Gene_Symbol".}
 
-\item{mark_purity}{\code{logical(1)}. default TRUE, mark RNA sample information table with sample purity from estimate algorithm}
+\item{mark_purity}{\code{logical(1)}. Mark RNA sample information table with sample purity from estimate algorithm. Default set as TRUE.}
 
-\item{remove_low_purity_sample}{\code{logical(1)}. default TRUE, remove sample with low purity than low_purity_threshold}
+\item{remove_low_purity_sample}{\code{logical(1)}. Remove sample with tumor purity lower than low_purity_threshold. Default set as TRUE}
 
-\item{low_purity_threshold}{\code{numeric()}. default=0.3, if remove_low_purity_sample as TRUE, sample with purity lower than low_purity_threshold  will be excluded}
+\item{low_purity_threshold}{\code{numeric()}. If remove_low_purity_sample as TRUE, sample with purity lower than low_purity_threshold (Default set at 0.3) will be excluded.}
 
-\item{mark_lowexpressgene_pct}{\code{logical(1)}.default TRUE, mark RNA sample information table with sample low expressed gene percentage}
+\item{mark_lowexpressgene_pct}{\code{logical(1)}.Mark RNA sample information table with sample low expressed gene percentage. Default set as TRUE.}
 
-\item{lowexpression_threshold}{\code{numeric()}. default=1, define whether gene is low expressed based on the threshold}
+\item{lowexpression_threshold}{\code{numeric()}. Threshold used to define whether gene is low expressed. Default set at 1.}
 
-\item{remove_sample_with_intense_lowexpressgene}{\code{logical(1)}. default TRUE, remove sample with too high percentage of low expressed gene}
+\item{remove_sample_with_intense_lowexpressgene}{\code{logical(1)}. Remove sample with high percentage of low expressed gene. Default set as TRUE.}
 
-\item{outlier_lowexpressgene_pct_factor}{\code{numeric()}. default=1.5, if remove_sample_with_intense_lowexpressgene is TRUE, sample with low expressed gene percentage over the product of outlier_lowexpressgene_pct_factor and average low expressed gene percentage across all samples will be excluded}
+\item{outlier_lowexpressgene_pct_factor}{\code{numeric()}. If remove_sample_with_intense_lowexpressgene is TRUE, sample with low expressed gene percentage over the product of outlier_lowexpressgene_pct_factor (default set at 1.5) and average low expressed gene percentage across all samples will be excluded.}
 
-\item{remove_lowexpressgene}{\code{logical(1)}. default TRUE, remove low expressed genes}
+\item{remove_lowexpressgene}{\code{logical(1)}.  Remove low expressed genes. Default set as TRUE.}
 
-\item{sample_frequency_threshold}{\code{numeric()}. default=0.5, if remove_lowexpressgene is TRUE, genes with low expression occurred in at least sample_frequency_threshold fration of all samples will be removed}
+\item{sample_frequency_threshold}{\code{numeric()}. If remove_lowexpressgene is TRUE, genes with low expression rate (out of all samples) greater or equal to sample_frequency_threshold (default=0.5) will be removed.}
 }
 \value{
 \code{list()}, contains marked original RNA sample information table, filtered clean RNA sample information table and filtered clean and consistent protein expressions.
