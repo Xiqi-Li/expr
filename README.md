@@ -1,6 +1,6 @@
 A code pool for RNA expression analysis in Woodman Lab.
 
-## Install
+## Installation
 
 Without SSH key: 
 
@@ -23,3 +23,19 @@ View package vignette with `browseVignettes("expr")` in Rstudio console, or [her
 ## Development
 - This package is documented with [roxygen2](https://cran.r-project.org/web/packages/roxygen2/vignettes/roxygen2.html). Before pushing a commit, 'Cmd + Shift + B' to generate document, then 'Cmd + Shift + B' to build the package. Keep new functions going!
 - Package tests are as good as how you write it. Please kindly report issues under "issue" tab every time an error is encountered.
+
+## Notes 11/13/2023
+**functions**
+  1) prepare_clean_RNA_sample_info_and_protein_expressions
+  2) prepare_unsupervised_data
+  3) unsupervised_analysis
+
+- Added line in `prepare_clean_RNA_sample_info_and_protein_expressions` function to ensure expression column names are identical to sample info sample IDs so that otherwise function error out.
+- Param name in `prepare_clean_RNA_sample_info_and_protein_expressions` changed `tolerent_library_size_factor` to `tolerant_library_size_factor`.
+- `Match.arg` renders error when arg has a length of 1 (when running function line by line). Changed to select first element in a vector.
+- gg3D (needed for `unsupervised_analysis`) seems to be difficult to install (XQuarts needed for MAC), used plotly instead.
+- The `guide` argument in `scale_*()` cannot be `FALSE`. This was deprecated in ggplot2 3.3.4. Fixed by adding `legend.position="none"`
+
+**vignette**
+- The package vignette showcase exprClean in making RNA analysis a pipeline.  Added a k-mean clustering measure to auto-detect batch effect as an alternative for manual visualization. Manual confirmation still recommended.
+- The package vignette can be easily customized to generate one-click html or pdf report for user datasets.
