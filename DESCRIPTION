@@ -13,5 +13,4 @@ Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 Imports: ComplexHeatmap, PCAtools, RColorBrewer, Rtsne, ggplot2,
         ggplotify, goeveg, gridExtra, ordinal, pheatmap, plotly, umap,
-        immunedeconv, plotly
-Built: R 4.2.2; ; 2023-01-14 02:12:10 UTC; unix
+        immunedeconv, plotly, assertthat
