@@ -1,23 +1,4 @@
 
-# @param expressions, dataframe, no default, gene expressions table,must be provided
-
-# @param sample_frequency_threshold, numeric, default 0.5, genes with low expression occurred in at least sample_frequency_threshold fraction of all samples will be removed
-
-# @param clinic_info, dataframe, no default, clinic information table, must be provide
-# @param ID_col, character, no default, column name for Sample ID (or Patient ID), should be consistent with column names of expressions
-# @param group_col, character, no default, column name for group factor that differential gene expression will be conducted based on
-# @param covariate_col, character, no default, column name for covariate factor that effects should be removed from model
-# @param block_col, character, no default, column name for block factor if test is conducted on block model, such as paired test
-
-# @param contrasts, string vector, no default, specific contrasts if prefered, elements should be exactly same as group factor
-
-# output, list, contains expressions,methond, design,contrasts,test, and statistics of edgeR test
-
-#####################################################################################################################################################################################################################
-# usage:                                                                                                                                                                                                            #
-# results<-dge_edgeR(protein_expressions,clinical_info = clean_RNA_sample_info,ID_col = "Sample_ID",group_col = "APOLLO_TIMPOINT",contrasts = c("TP2-Baseline")                                                     #
-#####################################################################################################################################################################################################################
-
 #' dge_edgeR
 #'
 #' @description differential gene expression analysis for raw count expressions using edgeR algorithm

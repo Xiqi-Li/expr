@@ -1,13 +1,3 @@
-# filter_pindels
-# filter pindels using various filter sets
-
-# contact: hzhu2@mdanderson.org
-
-# version:0.1.0
-
-# OS:ubuntu 16.04
-# R:4.1.2
-# Python:3.9.12
 
 # @param pindels, dataframe containing insertion and deletion annotation
 
@@ -76,6 +66,58 @@
 # @param traced_pindel_file,string, default traced_pindel.txt, file name for deposit results after each operation (filter sets) if save_traced_pindel=TRUE
 
 # output, data.frame,filtered pindels.
+#' filter_pindels
+#' @description filter pindels using various filter sets
+#'
+#' @param pindels \code{data.frame()}. containing insertion and deletion annotation.
+#' @param traced_columns
+#' @param low_purity_filter
+#' @param low_purity_samples
+#' @param exonutronly_filter
+#' @param keep
+#' @param remove_td_filter
+#' @param td_coverage_filter
+#' @param cutoff_td_coverage
+#' @param off_target_filter
+#' @param intervals
+#' @param germline_filter
+#' @param cutoff_n_vaf
+#' @param treat_known_cancer_gene_specially
+#' @param known_cancer_genes
+#' @param special_pindel_genes
+#' @param mapping_quality_filter
+#' @param cutoff_mq
+#' @param statistical_filter
+#' @param cutoff_prop_test_p
+#' @param t_vaf_filter
+#' @param cutoff_t_vaf
+#' @param tumor_f_filter
+#' @param cutoff_tumor_f
+#' @param deletion_length_filter
+#' @param cutoff_d_length
+#' @param insertion_length_filter
+#' @param cutoff_i_length
+#' @param tumor_coverage_filter
+#' @param cutoff_t_coverage
+#' @param normal_coverage_filter
+#' @param cutoff_n_coverage
+#' @param support_filter
+#' @param cutoff_support
+#' @param homopolymer_filter
+#' @param maxn_homopolymer
+#' @param repeat_pindel_filter
+#' @param cutoff_repeat
+#' @param consistent_pindel_statistic_filter
+#' @param pindel_for_consistent_statistic
+#' @param cutoff_binom_pval
+#' @param description_file
+#' @param save_traced_pindel
+#' @param traced_pindel_file
+#'
+#' @return
+#' @export
+#'
+#' @examples
 filter_pindels<-function(pindels,traced_columns=c("Sample_ID","gene","type","chr","start","end"),
                          low_purity_filter=T,low_purity_samples,
                          exonutronly_filter=T,keep=c("exonic","exonic;splicing","splicing","UTR3","UTR5","UTR5;UTR3"),
