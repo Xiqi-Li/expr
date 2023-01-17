@@ -1,118 +1,53 @@
 
-# @param pindels, dataframe containing insertion and deletion annotation
-
-# @param traced_columns, string vectors, default c("Sample_ID","gene","type","chr","start","end"),used for removing dupicated pindel annotations
-
-# @param low_purity_filter, logic, default TRUE, remove low purity sample or keep
-# @param low_purity_samples, string vector, list of samples with low purity
-
-# @param exonutronly_filter,logic, default TRUE, keep only pindels located in exon, utr or not
-# @param keep, string vector, default c("exonic","exonic;splicing","splicing","UTR3","UTR5","UTR5;UTR3"), list pindel locus (column func.knowngene) to keep
-
-# @param remove_td_filter, logic, default TRUE, remove tandem duplicated or not
-
-# @param td_coverage_filter, logic, default TRUE, remove low coverage tandom duplicate
-# @param cutoff_td_coverage, numeric, default 1.5, cutoff for ratio of tandem duplicate to average genome coverage
-
-# @param off_target_filter, logic, default TRUE, remove off-target pindels or not
-# @param intervals, GenomicRanges,providing the targeted regions information
-
-# @param germline_filter, logic, default TRUE, remove germline pindels or not
-# @param cutoff_n_vaf, numeric, defalut 0.01, cutoff for normal variant allele fraction
-
-# @param treat_known_cancer_gene_specially, logic, defalut TRUE, split known cancer genes and treat differently
-# @param known_cancer_genes, string vector, list of cancer gene names
-# @param special_pindel_genes, string vector, list of genes whose pindel no through filter sets
-
-# @param mapping_quality_filter, logic, default TRUE, remove low mapping quality pindels or not
-# @param cutoff_mq, numeric, default 25, cuttoff for averaged mapping quality of anchor reads
-
-# @param statistical_filter, logic,default TRUE, remove pindels not passing proportional test or not
-# @param cutoff_prop_test_p,numeric, default 0.01, cutoff for proportial test pvalue
-
-# @param t_vaf_filter,logic, default TRUE, remove pindels with low tumor variant allele fraction or not
-# @param cutoff_t_vaf, numeric, default 0.0, cutoff for tumor variant allele fraction
-
-# @param tumor_f_filter, logic, default TRUE, remove pindels with low tumor fraction or not
-# @param cutoff_tumor_f,numeric, default 0.0, cufoff for tumor fraction
-
-# @param deletion_length_filter, logic, defalut TRUE, remove too long deletions or not
-# @param cutoff_d_length, numeric, default 1000, cutoff for deletion length
-
-# @param insertion_length_filter, logic, defalut TRUE, remove too short insertions or not
-# @param cutoff_i_length, numeric, default 6, cutoff for insertiontion length
-
-# @param tumor_coverage_filter, logic, default TRUE, remove pindels with low tumor coverage or not
-# @param cutoff_t_coverage, numeric, default 10, cutoff for tumor coverage (column t_alt+ column t_ref)
-
-# @param normal_coverage_filter, logic, default TRUE, remove pindels with low normal coverage or not
-# @param cutoff_n_coverage, numeric, default 10, cutoff for normal coverage (column n_alt+ column n_ref)
-
-# @param support_filter, logic, default TRUE, remove pindels with low support reads or not
-# @param cutoff_support, numeric, default 3, cutoff for number of support reads
-
-# @param homopolymer_filter,logic,default TRUE, remove pindels with too many homopolymer or not
-# @param maxn_homopolymer,numeric, default 6, allowed maximal numer of homopolymer
-
-# @param repeat_pindel_filter, logic,default TRUE, remove repeated pindels or not
-# @param cutoff_repeat, numeric, default 2, cutoff for repeating frequency
-
-# @param consistent_pindel_statistic_filter,logic, default TRUE, remove pindels failed to pass consistency statistical test (binom test)
-# @param pindel_for_consistent_statistic,data.frame, containing gene,number of pindels, number of samples (columns: gene,n_pindel,n_sample), used for binom test with targeted pindels
-# @param cutoff_binom_pval, numeric, default 0.05, cutoff for binom test pvalue
-
-# @param description_file, string, default description.txt, file name for deposit of information of each operation (filter sets)
-# @param save_traced_pindel, logistic, default TRUE, save traced_pindel_file
-# @param traced_pindel_file,string, default traced_pindel.txt, file name for deposit results after each operation (filter sets) if save_traced_pindel=TRUE
-
 #' filter_pindels
 #' @description filter pindels using various filter sets
 #'
 #' @param pindels \code{data.frame()}. Pindels containing insertion and deletion annotation.
 #' @param traced_columns \code{vector(mode="character")}. Used for removing duplicated pindel annotations.
 #'  Default set as c("Sample_ID","gene","type","chr","start","end").
-#' @param low_purity_filter logic, default TRUE, remove low purity sample or keep
-#' @param low_purity_samples
-#' @param exonutronly_filter
-#' @param keep
-#' @param remove_td_filter
-#' @param td_coverage_filter
-#' @param cutoff_td_coverage
-#' @param off_target_filter
-#' @param intervals
-#' @param germline_filter
-#' @param cutoff_n_vaf
-#' @param treat_known_cancer_gene_specially
-#' @param known_cancer_genes
-#' @param special_pindel_genes
-#' @param mapping_quality_filter
-#' @param cutoff_mq
-#' @param statistical_filter
-#' @param cutoff_prop_test_p
-#' @param t_vaf_filter
-#' @param cutoff_t_vaf
-#' @param tumor_f_filter
-#' @param cutoff_tumor_f
-#' @param deletion_length_filter
-#' @param cutoff_d_length
-#' @param insertion_length_filter
-#' @param cutoff_i_length
-#' @param tumor_coverage_filter
-#' @param cutoff_t_coverage
-#' @param normal_coverage_filter
-#' @param cutoff_n_coverage
-#' @param support_filter
-#' @param cutoff_support
-#' @param homopolymer_filter
-#' @param maxn_homopolymer
-#' @param repeat_pindel_filter
-#' @param cutoff_repeat
-#' @param consistent_pindel_statistic_filter
-#' @param pindel_for_consistent_statistic
-#' @param cutoff_binom_pval
-#' @param description_file
-#' @param save_traced_pindel
-#' @param traced_pindel_file
+#' @param low_purity_filter \code{logical()}. Remove low purity sample or keep. Default is TRUE.
+#' @param low_purity_samples  \code{vector(mode="character")}. A vector of samples with low purity.
+#' @param exonutronly_filter \code{logical()}. keep only pindels located in exon, UTR or not. Default is TRUE.
+#' @param keep \code{vector(mode="character")}. Pindel locus (column func.knowngene) to keep. Default set as c("exonic","exonic;splicing","splicing","UTR3","UTR5","UTR5;UTR3"),
+#' @param remove_td_filter \code{logical()}. Remove tandem duplicated or not. Default is TRUE.
+#' @param td_coverage_filter \code{logical()}. Remove low coverage tandom duplicate. Default is TRUE.
+#' @param cutoff_td_coverage \code{numeric()}. Cutoff for ratio of tandem duplicate to average genome coverage. Default 1.5.
+#' @param off_target_filter \code{logical()}. Remove off-target pindels or not. Default is TRUE.
+#' @param intervals \code{GRanges object} Providing the targeted regions information.
+#' @param germline_filter \code{logical()}. Remove germline pindels or not. Default is TRUE.
+#' @param cutoff_n_vaf \code{numeric()}. Cutoff for normal variant allele fraction. Default 0.01.
+#' @param treat_known_cancer_gene_specially \code{logical()}. Split known cancer genes and treat differently. Default set to TRUE.
+#' @param known_cancer_genes \code{vector(mode="character")}. A vector of cancer gene names.
+#' @param special_pindel_genes \code{vector(mode="character")}. A vector of genes whose pindel no through filter sets.
+#' @param mapping_quality_filter \code{logical()}. Remove low mapping quality pindels or not. Default set to TRUE.
+#' @param cutoff_mq \code{numeric()}. Cutoff for averaged mapping quality of anchor reads. Default 25.
+#' @param statistical_filter \code{logical()}. Remove pindels not passing proportional test or not. Default set to TRUE.
+#' @param cutoff_prop_test_p \code{numeric()}. Cutoff for proportional test p-value. Default 0.01.
+#' @param t_vaf_filter \code{logical()}. Remove pindels with low tumor variant allele fraction or not. Default set to TRUE.
+#' @param cutoff_t_vaf \code{numeric()}. Cutoff for tumor variant allele fraction. Default 0.0.
+#' @param tumor_f_filter \code{logical()}. Remove pindels with low tumor fraction or not. Default set to TRUE.
+#' @param cutoff_tumor_f \code{numeric()}. Cutoff for tumor fraction. Default 0.0.
+#' @param deletion_length_filter \code{logical()}. Remove or not remove very long deletions.
+#' @param cutoff_d_length \code{numeric()}. Cutoff for deletion length. Default 1000.
+#' @param insertion_length_filter \code{logical()}. Remove or not remove very short insertions. Default set to TRUE.
+#' @param cutoff_i_length \code{numeric()}. Cutoff for insertion length. Default set to 6.
+#' @param tumor_coverage_filter \code{logical()}. Remove pindels with low tumor coverage or not. Default set to TRUE.
+#' @param cutoff_t_coverage \code{numeric()}. Cutoff for tumor coverage (column t_alt+ column t_ref). Default 10.
+#' @param normal_coverage_filter \code{logical()}. Remove pindels with low normal coverage or not. Default set to TRUE.
+#' @param cutoff_n_coverage \code{numeric()}. Cutoff for normal coverage (column n_alt+ column n_ref). Default set to 10.
+#' @param support_filter \code{logical()}. Remove pindels with low support reads or not. Default set to TRUE.
+#' @param cutoff_support \code{numeric()}. Cutoff for number of support reads. Default 3.
+#' @param homopolymer_filter \code{logical()}. Remove pindels with too many homopolymer or not. Default set to TRUE.
+#' @param maxn_homopolymer \code{numeric()}. Allowed maximal number of homopolymer. Default 6.
+#' @param repeat_pindel_filter \code{logical()}.  Remove repeated pindels or not. Default set to TRUE.
+#' @param cutoff_repeat \code{numeric()}. Cutoff for repeating frequency. Default 2.
+#' @param consistent_pindel_statistic_filter \code{logical()}. Remove pindels failed to pass consistency statistical test (binom test). Default set to TRUE.
+#' @param pindel_for_consistent_statistic \code{data.frame()} containing gene, number of pindels, number of samples (columns: gene,n_pindel,n_sample), used for binom test with targeted pindels
+#' @param cutoff_binom_pval \code{numeric()}. Cutoff for binom test pvalue. Default 0.05.
+#' @param description_file \code{character()}. File name for deposit of information of each operation (filter sets). Default description.txt.
+#' @param save_traced_pindel \code{logical()}. Save traced_pindel_file. Default set as TRUE.
+#' @param traced_pindel_file \code{character()}. File name of saved results after each operation (filter sets) if save_traced_pindel=TRUE, Default set as traced_pindel.txt.
+#' @import rtracklayer plyranges
 #'
 #' @return \code{data.frame()}. Filtered pindels.
 #' @export
@@ -365,6 +300,7 @@ filter_pindels<-function(pindels,traced_columns=c("Sample_ID","gene","type","chr
     pindels_traced[["filter_repeat_pindel"]]<-pindels[,traced_columns]
     traced_names<-c(traced_names,"filter_repeat_pindel")
   }
+
   #browser()
   if(consistent_pindel_statistic_filter){
     n_sample_subject<-length(unique(pindels[["Sample_ID"]]))
