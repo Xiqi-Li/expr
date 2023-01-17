@@ -13,9 +13,9 @@ require(dplyr)
 require(htmltools)
 
 ## ----load-and-clean-data------------------------------------------------------
-expressions_file = system.file("extdata/expressions.csv",package = "exprClean")
-RNA_sample_info_file = system.file("extdata/RNA_sample_info.csv",package = "exprClean")
-protein_coding_ensemble2symbol_file = system.file("extdata/protein_coding_ensemble2symbol.csv",package = "exprClean")
+expressions_file = system.file("extdata/expressions.csv",package = "expr")
+RNA_sample_info_file = system.file("extdata/RNA_sample_info.csv",package = "expr")
+protein_coding_ensemble2symbol_file = system.file("extdata/protein_coding_ensemble2symbol.csv",package = "expr")
 
 RNA_sample_info<-read.csv(RNA_sample_info_file,header=T,stringsAsFactors = F,check.names = F)
 expressions<-read.csv(expressions_file,header=T,stringsAsFactors = F,check.names = F)
@@ -174,7 +174,7 @@ matched=any(hits)==T
 batch_effect_exist=all(matched,good)
 cat(sprintf("Clustering good?: **%s**<br>
             Clustering matched?: **%s**<br>
-            Batch effect exists: **%s**",good,matched,batch_effect_exist))
+            Batch effect exists: **%s**<br>",good,matched,batch_effect_exist))
 
 
 ## ----batch-effect-correction--------------------------------------------------
@@ -289,10 +289,11 @@ p5[["combat"]]
 }
 
 ## ----downstream,out.width="100%",fig.width=7,fig.height=4,dpi=130-------------
-if (batch_effect_exist){log2_expressions=limma_rbe_log2_protein_expressions}else{expressions=log2_clean_protein_expressions}
+if (batch_effect_exist){log2_expressions=limma_rbe_log2_protein_expressions}else{log2_expressions=log2_clean_protein_expressions}
 
 # clear environment
 rm(list = setdiff(ls(),c(grep("log2_expressions|info",ls(),value = T))))
+# save(clean_RNA_sample_info,log2_expressions,file = "data/woodman.RData")
 unsupervised_expressions<-prepare_unsupervised_data(log2_expressions,method="MAD",mad_top_n=1000)
 Heatmap(t(scale(t(unsupervised_expressions))),show_row_names = F,name="expression\nz_score")
 
