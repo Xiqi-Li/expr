@@ -65,13 +65,13 @@
 # @param save_traced_pindel, logistic, default TRUE, save traced_pindel_file
 # @param traced_pindel_file,string, default traced_pindel.txt, file name for deposit results after each operation (filter sets) if save_traced_pindel=TRUE
 
-# output, data.frame,filtered pindels.
 #' filter_pindels
 #' @description filter pindels using various filter sets
 #'
-#' @param pindels \code{data.frame()}. containing insertion and deletion annotation.
-#' @param traced_columns
-#' @param low_purity_filter
+#' @param pindels \code{data.frame()}. Pindels containing insertion and deletion annotation.
+#' @param traced_columns \code{vector(mode="character")}. Used for removing duplicated pindel annotations.
+#'  Default set as c("Sample_ID","gene","type","chr","start","end").
+#' @param low_purity_filter logic, default TRUE, remove low purity sample or keep
 #' @param low_purity_samples
 #' @param exonutronly_filter
 #' @param keep
@@ -114,7 +114,7 @@
 #' @param save_traced_pindel
 #' @param traced_pindel_file
 #'
-#' @return
+#' @return \code{data.frame()}. Filtered pindels.
 #' @export
 #'
 #' @examples
