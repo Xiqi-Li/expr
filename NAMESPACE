@@ -3,6 +3,7 @@
 export(dge_DESeq)
 export(dge_edgeR)
 export(dge_limma)
+export(filter_mutects)
 export(filter_pindels)
 export(prepare_clean_RNA_sample_info_and_protein_expressions)
 export(prepare_unsupervised_data)

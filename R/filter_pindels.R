@@ -8,17 +8,17 @@
 #' @param low_purity_filter \code{logical()}. Remove low purity sample or keep. Default is TRUE.
 #' @param low_purity_samples  \code{vector(mode="character")}. A vector of samples with low purity.
 #' @param exonutronly_filter \code{logical()}. keep only pindels located in exon, UTR or not. Default is TRUE.
-#' @param keep \code{vector(mode="character")}. Pindel locus (column func.knowngene) to keep. Default set as c("exonic","exonic;splicing","splicing","UTR3","UTR5","UTR5;UTR3"),
+#' @param keep \code{vector(mode="character")}. Pindel loci (column func.knowngene) to keep. Default set as c("exonic","exonic;splicing","splicing","UTR3","UTR5","UTR5;UTR3").
 #' @param remove_td_filter \code{logical()}. Remove tandem duplicated or not. Default is TRUE.
 #' @param td_coverage_filter \code{logical()}. Remove low coverage tandom duplicate. Default is TRUE.
 #' @param cutoff_td_coverage \code{numeric()}. Cutoff for ratio of tandem duplicate to average genome coverage. Default 1.5.
 #' @param off_target_filter \code{logical()}. Remove off-target pindels or not. Default is TRUE.
-#' @param intervals \code{GRanges object} Providing the targeted regions information.
+#' @param intervals \code{GRanges object}. Providing the targeted regions information.
 #' @param germline_filter \code{logical()}. Remove germline pindels or not. Default is TRUE.
 #' @param cutoff_n_vaf \code{numeric()}. Cutoff for normal variant allele fraction. Default 0.01.
 #' @param treat_known_cancer_gene_specially \code{logical()}. Split known cancer genes and treat differently. Default set to TRUE.
 #' @param known_cancer_genes \code{vector(mode="character")}. A vector of cancer gene names.
-#' @param special_pindel_genes \code{vector(mode="character")}. A vector of genes whose pindel no through filter sets.
+#' @param special_pindel_genes \code{vector(mode="character")}. A vector of genes whose pindel to be exempt from filter sets.
 #' @param mapping_quality_filter \code{logical()}. Remove low mapping quality pindels or not. Default set to TRUE.
 #' @param cutoff_mq \code{numeric()}. Cutoff for averaged mapping quality of anchor reads. Default 25.
 #' @param statistical_filter \code{logical()}. Remove pindels not passing proportional test or not. Default set to TRUE.
@@ -52,7 +52,7 @@
 #' @return \code{data.frame()}. Filtered pindels.
 #' @export
 #'
-#' @examples
+
 filter_pindels<-function(pindels,traced_columns=c("Sample_ID","gene","type","chr","start","end"),
                          low_purity_filter=T,low_purity_samples,
                          exonutronly_filter=T,keep=c("exonic","exonic;splicing","splicing","UTR3","UTR5","UTR5;UTR3"),

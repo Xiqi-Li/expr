@@ -1,61 +1,46 @@
-# filter_mutects
-# filter mutects using various filter sets
 
-# contact: hzhu2@mdanderson.org
+#' filter_mutects
+#' @description filter mutects using various filter sets
+#'
+#' @param mutects \code{data.frame()} containing SNV annotation.
+#' @param traced_columns \code{vector(mode="character")}. Used for removing duplicated SNV annotations.
+#'  Default set as c("Sample_ID","gene","type","chr","start","end").
+#' @param low_purity_filter \code{logical()}. Remove low purity sample or keep. Default is TRUE.
+#' @param low_purity_samples \code{vector(mode="character")}. A vector of samples with low purity.
+#' @param exonutronly_filter \code{logical()}. Keep only SNVs located in exon, UTR or not. Default is TRUE.
+#' @param keep \code{vector(mode="character")}. A vector of SNV loci (column func.knowngene) to keep.
+#'  Default c("exonic","exonic;splicing","splicing","UTR3","UTR5","UTR5;UTR3").
+#' @param off_target_filter \code{logical()}. Remove off-target SNVs or not. Default is TRUE.
+#' @param intervals \code{GRanges object}. Providing the targeted regions information.
+#' @param germline_filter \code{logical()}. Remove germline SNVs or not. Default is TRUE.
+#' @param cutoff_n_vaf \code{numeric()}. Cutoff for normal variant allele fraction. Default 0.01.
+#' @param treat_known_cancer_gene_specially \code{logical()}. Split known cancer genes and treat differently. Default set to TRUE.
+#' @param known_cancer_genes \code{vector(mode="character")}. A vector of cancer gene names.
+#' @param special_mutect_genes \code{vector(mode="character")}. A vector of genes whose SNVs should be exempt from filter sets.
+#' @param mapping_quality_filter \code{logical()}. Remove low mapping quality SNVs or not. Default TRUE.
+#' @param cutoff_mq \code{numeric()}. Cutoff for maximal mapping quality of reads. Default 30,
+#' @param statistical_filter \code{logical()}. Remove SNVs not passing proportional test or not. Default TRUE.
+#' @param cutoff_prop_test_p \code{numeric()}. Cutoff for proportional test pvalue. Default 0.01.
+#' @param tumor_f_filter \code{logical()}. Remove SNVs with low tumor fraction or not. Default TRUE.
+#' @param cutoff_tumor_f \code{numeric()}. Cutoff for tumor fraction. Default 0.0.
+#' @param tumor_coverage_filter \code{logical()}. Remove SNVs with low tumor coverage or not. Default TRUE.
+#' @param cutoff_t_coverage \code{numeric()}. Cutoff for tumor coverage (column t_alt+ column t_ref). Default 10.
+#' @param normal_coverage_filter \code{logical()}. Remove SNVs with low normal coverage or not. Default TRUE.
+#' @param cutoff_n_coverage \code{numeric()}. Cutoff for normal coverage (column n_alt+ column n_ref). Default 10.
+#' @param lodt_filter \code{logical()}. Remove SNVs with low log likelihood of tumor event or not. Default TRUE.
+#' @param cutoff_lodt \code{numeric()}. Cutoff for number of log likelihood of tumor event. Default 6.3.
+#' @param consistent_mutect_statistic_filter \code{logical()}. Remove SNVs failed to pass consistency statistical test (binom test). Default set to TRUE.
+#' @param mutect_for_consistent_statistic \code{data.frame()} object containing gene, number of SNVs, number of samples (columns: gene,n_pindel,n_sample), used for binom test with targeted SNVs
+#' @param cutoff_binom_pval \code{numeric()}. Cutoff for binom test p-value. Default 0.05.
+#' @param description_file \code{character()}. File name for deposit of information of each operation (filter sets). Default "description.txt".
+#' @param save_traced_mutectsave \code{logical()}. Save traced_mutect_file or not. Default set to TRUE.
+#' @param traced_mutect_file \code{character()}. File name for deposit results after each operation (filter sets) if save_traced_mutect is TRUE.
+#'  Default "traced_pindel.txt".
 
-# version:0.1.0
-
-# OS:ubuntu 16.04
-# R:4.1.2
-# Python:3.9.12
-
-# @param mutects, dataframe, containing snv annotation
-
-# @param traced_columns, string vectors, default c("Sample_ID","gene","type","chr","start","end"),used for removing dupicated snv annotations
-
-# @param low_purity_filter, logic, default TRUE, remove low purity sample or keep
-# @param low_purity_samples, string vector, list of samples with low purity
-
-# @param exonutronly_filter,logic, default TRUE, keep only snv located in exon, utr or not
-# @param keep, string vector, default c("exonic","exonic;splicing","splicing","UTR3","UTR5","UTR5;UTR3"), list snv locus (column func.knowngene) to keep
-
-# @param off_target_filter, logic, default TRUE, remove off-target snv or not
-# @param intervals, GenomicRanges,providing the targeted regions information
-
-# @param germline_filter, logic, default TRUE, remove germline snv or not
-# @param cutoff_n_vaf, numeric, defalut 0.01, cutoff for normal variant allele fraction
-
-# @param treat_known_cancer_gene_specially, logic, defalut TRUE, split known cancer genes and treat differently
-# @param known_cancer_genes, string vector, list of cancer gene names
-# @param special_mutectl_genes, string vector, list of genes whose snv not through filter sets
-
-# @param mapping_quality_filter, logic, default TRUE, remove low mapping quality snv or not
-# @param cutoff_mq, numeric, default 30, cuttoff for maximal mapping quality of reads
-
-# @param statistical_filter, logic,default TRUE, remove snv not passing proportional test or not
-# @param cutoff_prop_test_p,numeric, default 0.01, cutoff for proportial test pvalue
-
-# @param tumor_f_filter, logic, default TRUE, remove snv with low tumor fraction or not
-# @param cutoff_tumor_f,numeric, default 0.0, cufoff for tumor fraction
-
-# @param tumor_coverage_filter, logic, default TRUE, remove snv with low tumor coverage or not
-# @param cutoff_t_coverage, numeric, default 10, cutoff for tumor coverage (column t_alt+ column t_ref)
-
-# @param normal_coverage_filter, logic, default TRUE, remove snv with low normal coverage or not
-# @param cutoff_n_coverage, numeric, default 10, cutoff for normal coverage (column n_alt+ column n_ref)
-
-# @param lodt_filter, logic, default TRUE, remove snv with low log likelyhood of tumor event or not
-# @param cutoff_lodt, numeric, default 6.3, cutoff for number of log likelyhood of tumor event
-
-# @param consistent_mutect_statistic_filter,logic, default TRUE, remove snv failed to pass consistency statistical test (binom test)
-# @param mutect_for_consistent_statistic,data.frame, containing gene,number of snv, number of samples (columns: gene,n_pindel,n_sample), used for binom test with targeted snv
-# @param cutoff_binom_pval, numeric, default 0.05, cutoff for binom test pvalue
-
-# @param description_file, string, default description.txt, file name for deposit of information of each operation (filter sets)
-# @param save_traced_mutect, logistic, default TRUE, save traced_mutect_file
-# @param traced_mutect_file,string, default traced_pindel.txt, file name for deposit results after each operation (filter sets) if save_traced_mutect=TRUE
-
-# output, data.frame,filtered snv.
+#'
+#' @return \code{data.frame()}. Filtered SNVs.
+#' @export
+#'
 filter_mutects<-function(mutects, traced_columns=c("Sample_ID","gene","type","chr","start","end"),
                          low_purity_filter=T,low_purity_samples,
                          exonutronly_filter=T,keep=c("exonic","exonic;splicing","splicing","UTR3","UTR5","UTR5;UTR3"),
