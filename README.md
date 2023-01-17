@@ -36,7 +36,7 @@ View package vignette with `browseVignettes("expr")` in Rstudio console, or [her
 - gg3D (needed for `unsupervised_analysis`) seems to be difficult to install (XQuarts needed for MAC), used plotly instead.
 - The `guide` argument in `scale_*()` cannot be `FALSE`. This was deprecated in ggplot2 3.3.4. Fixed by adding `legend.position="none"`
 - Fixed the error that setting any of analysis to `FALSE` fails the `unsupervised_analysis` function.
-  1) grid.arrange line for organizing figures was removed. See function manual for arranging the figure
+  1) grid.arrange line for organizing figures was removed. See function manual for arranging plots.
   2) Results were sperated into plots and analysis responses in the function output.
 
 **vignette**
