@@ -19,6 +19,7 @@
 #' }
 #' Default set as "limma_trend".
 #'
+#' @import DESeq2 statmod
 #' @return \code{list()}, contains expressions, method, design, contrasts, test, and statistics of limma test.
 #' @export
 #'

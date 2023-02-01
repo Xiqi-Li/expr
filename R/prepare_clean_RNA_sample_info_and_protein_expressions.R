@@ -46,11 +46,15 @@ prepare_clean_RNA_sample_info_and_protein_expressions<-function(RNA_sample_info,
   # symbol_col<-match.arg(symbol_col)#XL
   #XL
   sample_id_col=sample_id_col[1]
-  gene_id_col<gene_id_col[1]
+  gene_id_col<-gene_id_col[1]
   ens_id_col<-ens_id_col[1]
   symbol_col<-symbol_col[1]
 
-  sequenced_RNA_samples<-colnames(expressions)[-match(gene_id_col,colnames(expressions))]
+  if(gene_id_col=="rowname"){
+    sequenced_RNA_samples=colnames(expressions)
+  }else{
+    sequenced_RNA_samples=colnames(expressions)[-match(gene_id_col,colnames(expressions))]
+  }
   stopifnot("some sequencing sample come without sample infomation!"=all( sequenced_RNA_samples %in% RNA_sample_info[[sample_id_col]]))
   if(length(RNA_sample_info[[sample_id_col]])>length(sequenced_RNA_samples)){
     cat(paste(setdiff(RNA_sample_info[[sample_id_col]],sequenced_RNA_samples),collapse = ", ")," are not sequenced!\n")
@@ -78,7 +82,7 @@ prepare_clean_RNA_sample_info_and_protein_expressions<-function(RNA_sample_info,
       if(missing(protein_coding_ensemble2symbol_table)) {stop("Since expression presented with ensemble id,protein coding gene ensemble to symbol table is required!")}
       protein_expressions<-expressions[rownames(expressions) %in% protein_coding_ensemble2symbol_table[[ens_id_col]],]
       rownames(protein_expressions)<-protein_coding_ensemble2symbol_table[[symbol_col]][match(rownames(protein_expressions),protein_coding_ensemble2symbol_table[[ens_id_col]])]
-    } else {protein_expressions<-expressions[rownames(expressions) %in% protein_coding_ensemble2symbol_table[[symbol_col]]]}
+    } else {protein_expressions<-expressions[rownames(expressions) %in% protein_coding_ensemble2symbol_table[[symbol_col]],]} # 85
   } else {
     if(any(grepl("ENSG",expressions[[gene_id_col]]))){
       if(missing(protein_coding_ensemble2symbol_table)) {stop("Since expression presented with ensemble id,protein coding gene ensemble to symbol table is required!")}
