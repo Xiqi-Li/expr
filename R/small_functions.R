@@ -96,3 +96,19 @@ getHeatMapAnnotation=function(sampleAttr,data_mx=NULL,nGroupMax=10,essentialOnly
     heatmapAnnotation=do.call(HeatmapAnnotation,anno.args)
     return(heatmapAnnotation)
 }
+
+#' MRNsurr De-identify patient ID
+#' @description randomly generate surrogate patient ID to deidentify patient information
+#' @param x vector of IDs
+#' @param seed seed for randomization. Default is NULL.
+#'
+#' @return vector of surrogate IDs
+#' @export
+#'
+MRNsurr=function(x,seed=NULL){
+  x=factor(x)
+  if(is.null(seed)){seed=round(runif(1, 1, 1000))}
+  set.seed(seed)
+  levels(x)=paste("pt", sample(1:nlevels(x)), sep = "")
+  return(as.vector(x))
+}
