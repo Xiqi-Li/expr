@@ -12,7 +12,7 @@ table_org=function(a=list()){Reduce(function(x,y) full_join(x,y,by=intersect(col
 #' @param x vector
 #' @param y a character or a vector to replace NA in x.
 #'
-#' @return
+#' @return new vector.
 #' @export
 #'
 reassignNA=function(x,y){
@@ -135,7 +135,7 @@ changeColNames=function(x,ind,newNames){
 #' @param x The data matrix or data frame
 #' @param byColumn Boolean: whether the function done by column
 #'
-#' @return
+#' @return fill rate
 #' @export
 #'
 getFill=function(x,byColumn=F){
@@ -165,7 +165,6 @@ getFill=function(x,byColumn=F){
 #' @return a named vector consisting "Difference of means", "Std Error", "t", "p-value".
 #' @export
 #'
-#' @examples
 t_test2 <- function(m1,m2,s1,s2,n1,n2,m0=0,equal.variance=FALSE)
 {
   if( equal.variance==FALSE )

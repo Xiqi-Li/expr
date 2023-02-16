@@ -22,7 +22,6 @@
 #'
 #' @export
 #'
-#' @examples
 #'
 NbClust <-function(data = NULL, diss=NULL, distance ="euclidean", min.nc=2, max.nc=15, method =NULL, index = "all", alphaBeale = 0.1)
 {

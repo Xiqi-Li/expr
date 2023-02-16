@@ -6,7 +6,7 @@
 #' consensus_immunedeconvolute
 #' @description Immune deconvolution of gene expression using multiple algorithms and immune signatures, and them extract consensus immune cellular fraction
 #'
-#' @param expressions
+#' @param expressions \code{data.frame()}. Gene expression with column as samples, row as gene names.
 #' @param methods \code{vector(mode="character")}. default =c("abis","bindea","cibersort","consensustme","danaher","davoli","dcq","deconseq,"epic","mcpcounter","quantiseq","timer","xcell"),various algorithms of deconvolution
 #' @param celltype_mapping \code{data.frame()}. A mapping table from method specific cell type onto consensus cell type.
 #' @param bindea_reference \code{data.frame()}. Immune signature for various immune cell type, if bindea is in the method list, bindea_reference must be provided
