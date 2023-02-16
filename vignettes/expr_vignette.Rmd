@@ -40,14 +40,12 @@ expressions_file = system.file("extdata/expressions.csv",package = "expr")
 RNA_sample_info_file = system.file("extdata/RNA_sample_info.csv",package = "expr")
 RNA_clinic_info_file = system.file("extdata/RNA_clinic_info.csv",package = "expr")
 protein_coding_ensemble2symbol_file = system.file("extdata/protein_coding_ensemble2symbol.csv",package = "expr")
-protein_coding_gene_info_file=system.file("extdata/hg19_ncbi_protein_coding_gene_info.txt",package = "expr")
 
 RNA_sample_info<-read.csv(RNA_sample_info_file,header=T,stringsAsFactors = F,check.names = F)
 RNA_clinic_info<-read.csv(RNA_clinic_info_file,header=T,stringsAsFactors = F,check.names = F)
 RNA_sample_info=table_org(list(RNA_sample_info,RNA_clinic_info))
 expressions<-read.csv(expressions_file,header=T,stringsAsFactors = F,check.names = F)
 protein_coding_ensemble2symbol<-read.csv(protein_coding_ensemble2symbol_file,header=T,stringsAsFactors = F,check.names = F)
-protein_coding_gene_info=read.table(protein_coding_gene_info_file,header=T,sep="",stringsAsFactors = F,check.names = F)
 
 # set param
 paramInput=data.frame(
@@ -93,7 +91,7 @@ log2_clean_protein_expressions<-log2(clean_protein_expressions+1)
 
 # define class of sample attributes
 coerce_ind=names(which(sapply(clean_RNA_sample_info[grep("ID|MRN",colnames(clean_RNA_sample_info))],is.numeric)))
-clean_RNA_sample_info[,coerce_ind]=as.character(clean_RNA_sample_info[,coerce_ind])
+clean_RNA_sample_info[coerce_ind]=as.character(clean_RNA_sample_info[coerce_ind])
 ```
 
 ```{r load-and-clean-data-res, echo=FALSE, results = 'asis'}
@@ -108,7 +106,7 @@ t2
 ### Visualization of sample distribution via unsupervised clustering
 In this step, genes with higher variance across data set and a fill rate greater than 0.75 are used for unsupervised analysis.
 ```{r batch-effect-visualization}
-rm(list = setdiff(ls(),c(lsf.str(), grep("clean|protein_coding_gene_info",ls(),value = T))))
+rm(list = setdiff(ls(),c(lsf.str(), grep("clean",ls(),value = T))))
 
 # set param
 paramInput=data.frame(method="MAD",mad_top_n = 1000,remove_outlier = F)
@@ -332,7 +330,7 @@ browsable(tagList(tags$div(
 }
 ```
 
-```{r combat-plots2,fig.width=6,fig.height=3,out.width="100%",dpi=130,class.source = 'fold-hide'}
+```{r combat-plots2,fig.width=6,fig.height=3,out.width="100%",dpi=130,,class.source = 'fold-hide'}
 if (batch_effect_exist) {
 cat("<br>")
 p5[["combat"]]
@@ -344,61 +342,99 @@ p5[["combat"]]
 If batch effect correction was done, use post-batch-effect-removal expression matrix for downstream analysis, eg. unsupervised clustering. Below, limma-corrected expressions were used.
 
 ### unsupervised
-```{r clustering,out.width="100%",fig.width=7,fig.height=4,dpi=130}
+```{r downstream,out.width="100%",fig.width=7,fig.height=4,dpi=130}
 if (batch_effect_exist){log2_expressions=limma_rbe_log2_protein_expressions}else{log2_expressions=log2_clean_protein_expressions}
 
 # clear environment
 rm(list = setdiff(ls(),c(grep("log2_expressions|info",ls(),value = T))))
 # save(clean_RNA_sample_info,log2_expressions,file = "data/woodman.RData")
 unsupervised_expressions<-prepare_unsupervised_data(log2_expressions,method="MAD",mad_top_n=1000)
+Heatmap(t(scale(t(unsupervised_expressions))),show_row_names = F,name="expression\nz_score")
 
-heatmap_mRNA<-draw(Heatmap(
-    t(scale(t(unsupervised_expressions))),
-    name="expression\nz_score",
-    top_annotation = getHeatMapAnnotation(sampleAttr = clean_RNA_sample_info,data_mx = log2_expressions,essentialOnly = T),
-    show_row_names = F,column_dend_reorder = T,show_column_names = F,
-    column_names_gp = gpar(fontsize=1)))
+sampleAttr=clean_RNA_sample_info
+data_mx=log2_expressions
+  # determine features
+
+get_heatMapAnnotation=function(sampleAttr,data_mx=NULL,nGroupMax=10){
+  if(!is.null(data_mx)){
+    sampleAttr$colSum=colSums(data_mx)
+    sampleAttr$max=apply(data_mx,2,max)
+    sampleAttr$median=apply(data_mx,2,median)
+    sampleAttr$mad=apply(data_mx,2,mad)
+  }
+  feature.names=apply(sampleAttr, c(2), function(x) length(table(x)))
+  feature.names=feature.names[sapply(sampleAttr[names(feature.names)],is.numeric)|(feature.names<=nGroupMax&feature.names>1)]
+  feature.names=names(feature.names)
+  feature.names.surr=tolower(setNames(feature.names,gsub("[-_ \t\n\r\v\f]","",feature.names)))
+  
+  args=list()
+  for (feature.name in feature.names[sapply(sampleAttr[names(feature.names)],is.numeric)]){
+    OS.ind=grep("overallsurvival",feature.names.surr);OS.name=feature.names[OS.ind]
+    VitalStatus.ind=grep("vitalstatus",feature.names.surr);VitalStatus.name=feature.names[VitalStatus.ind]
+    PFS.ind=grep("progressionfreesurvival",feature.names.surr);PFS.name=feature.names[PFS.ind]
+    age.ind=grep("age",feature.names.surr)
+    args=list()
+    
+    args[[feature.name]]=anno_barplot(
+      clean_RNA_sample_info$OverallSurvival,
+      gp=gpar(col=ifelse(clean_RNA_sample_info$VitalStatus=="1","red","green")))
+  }
+}
+
+args=list(
+  OverallSurvival=anno_barplot(
+    clean_RNA_sample_info$OverallSurvival,
+    gp=gpar(col=ifelse(clean_RNA_sample_info$VitalStatus=="1","red","green"))),
+  PFS=anno_barplot(
+    clean_RNA_sample_info$current_age,
+    gp=gpar(col=ifelse(clean_RNA_sample_info$current_age<70,"red","green")))
+)
+anno_RNA.2=do.call(HeatmapAnnotation,args)
+
+
+anno_RNA<-HeatmapAnnotation(
+  OverallSurvival=anno_barplot(
+    clean_RNA_sample_info$OverallSurvival,
+    gp=gpar(col=ifelse(clean_RNA_sample_info$VitalStatus=="1","red","green"))),
+  PFS=anno_barplot(
+    clean_RNA_sample_info$`Progression-free_survival`,
+    gp=gpar(col=ifelse(clean_RNA_sample_info$`Event_for_Progression?`=="1","red","green"))),
+  Age=anno_barplot(
+    clean_RNA_sample_info$Age_on_study),Stage=factor(clean_RNA_sample_info$Stage_at_Diagnosis),
+  Timepoint=factor(clean_RNA_sample_info$Timepoint),
+  Gender=factor(clean_RNA_sample_info$Gender),
+  Response=factor(clean_RNA_sample_info$`Best_Response_(RECIST)`),
+  col=list(Gender=c("Male"="blue","Female"="red"),Timepoint=c("Baseline"="green","TP-2"="blue","TP-3"="red"),
+           Response=c("Non-evaluable"="grey","Progressive Disease"="red","Partial Response"="green","Stable Disease"="blue")))
+
 
 ```
 
 ### Differential gene expression (DGE) analysis
-#### comparison between Baseline group and TP2 group
-```{r DGE-baseline-VS-TP2,out.width="100%"}
-comp_limma<-dge_limma(
-  log2_expressions,is_rawcount = F,is_logged = T,normalize = F,
-  sample_frequency_threshold=0.5,
-  clinic_info = clean_RNA_sample_info,
-  ID_col = "Sample_ID",
-  group_col = "APOLLO_TIMPOINT",
-  contrasts = c("TP2-Baseline"),
-  method ="limma_trend")
+```{r downstream,out.width="100%",fig.width=7,fig.height=4,dpi=130}
+#comparison between Baseline and TP2
+RNA_sample_info_<-clean_RNA_clinic
+protein_expressions_<-limma_rbe_log2_protein_expressions
+assertthat::are_equal(RNA_sample_info_$Sample_ID,colnames(protein_expressions_))
+output_dir<-"Fullset_Timepoint_Stats"
+if(!dir.exists(output_dir)){dir.create(output_dir)}
+
+comp_limma<-dge_limma(protein_expressions_,is_rawcount = F,is_logged = T,normalize = F,sample_frequency_threshold=0.5,clinic_info = RNA_sample_info_,ID_col = "Sample_ID",group_col = "APOLLO_TIMPOINT",contrasts = c("TP2-Baseline"),method ="limma_trend")
 stats=cbind(comp_limma$statistics,protein_coding_gene_info[match(rownames(comp_limma$statistics),protein_coding_gene_info$Gene_name),-1])
 stats<-stats[order(stats[["TP2-Baseline:P.Value"]]),]
+write.csv(stats,file.path(output_dir,"fullset_statistics_by_Timepoint.csv"),row.names = T)
 
-format(stats[stats[["TP2-Baseline:P.Value"]]<0.05,],nsmall=2) %>%
-  DT::datatable(options = list(scrollX=T,scrollY=T),
-                caption = htmltools::tags$caption(
-                  style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-                  'DGE: baseline VS TP2') )
-```
-
-#### Paired comparison between Baseline and TP2 samples
-```{r paired-DGE-baseline-VS-TP2,out.width="100%"}
-
-paired_RNA_sample_info=clean_RNA_sample_info[table(clean_RNA_sample_info$MRN)>1,]
-# paired_RNA_sample_info<-clean_RNA_clinic[match(paired_RNA_sample_info$Sample_ID,clean_RNA_clinic$Sample_ID),]
-paired_log2_expressions<-log2_expressions[,paired_RNA_sample_info$Sample_ID]
-assertthat::are_equal(colnames(paired_log2_expressions),paired_RNA_sample_info$Sample_ID)
-paired_comp_limma<-dge_limma(
-  paired_log2_expressions,is_rawcount = F,is_logged = T,normalize = F,sample_frequency_threshold=0.5,
-  clinic_info = paired_RNA_sample_info,ID_col = "Sample_ID",group_col = "APOLLO_TIMPOINT",
-  contrasts = c("TP2-Baseline"),method ="limma_trend")
+#comparison for paired Baseline vs TP2
+output_dir<-"Paired_Timepoint_Stats"
+if(!dir.exists(output_dir)){dir.create(output_dir)}
+paired_RNA_sample_info_file="Example/paired_RNA_sample_info.csv"
+paired_RNA_sample_info<-read.csv(paired_RNA_sample_info_file,header=T,stringsAsFactors = F,check.names = F)
+paired_RNA_sample_info<-clean_RNA_clinic[match(paired_RNA_sample_info$Sample_ID,clean_RNA_clinic$Sample_ID),]
+paired_protein_expressions<-limma_rbe_log2_protein_expressions[,paired_RNA_sample_info$Sample_ID]
+assertthat::are_equal(colnames(paired_protein_expressions),paired_RNA_sample_info$Sample_ID)
+paired_comp_limma<-dge_limma(paired_protein_expressions,is_rawcount = F,is_logged = T,normalize = F,sample_frequency_threshold=0.5,clinic_info = paired_RNA_sample_info,ID_col = "Sample_ID",group_col = "APOLLO_TIMPOINT",contrasts = c("TP2-Baseline"),method ="limma_trend")
 stats=cbind(paired_comp_limma$statistics,protein_coding_gene_info[match(rownames(paired_comp_limma$statistics),protein_coding_gene_info$Gene_name),-1])
 stats<-stats[order(stats[["TP2-Baseline:P.Value"]]),]
+write.csv(stats,file.path(output_dir,"paired_statistics_by_Timepoint.csv"),row.names = T)
 
-format(stats[stats[["TP2-Baseline:P.Value"]]<0.05,],nsmall=2) %>%
-  DT::datatable(options = list(scrollX=T,scrollY=T),
-                caption = htmltools::tags$caption(
-                  style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
-                  'DGE: paired baseline VS TP2') )
 ```

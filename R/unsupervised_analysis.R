@@ -1,15 +1,3 @@
-# @param run_umap, logic, default TRUE, whether to run UMAP analysis
-# @param umap_params,list, default NULL, params passed to UMAP
-# @param umap_config, list, default umap.defaults, extra config param passed to UMAP
-
-# @param run_tsne, logic, default TRUE, whether to run TSNE analysis
-# @param tsne_params,list, default NULL, params passed to UMAP
-
-# @param run_pca, logic, default TRUE, whether to run PCA analysis
-# @param pca_params,list, default NULL, params passed to PCA
-
-# @param run_mds, logic, default TRUE, whether to run MDS analysis
-# @param mds_params,list, default NULL, params passed to MDS
 
 #' unsupervised analysis
 #'
@@ -151,7 +139,15 @@ unsupervised_analysis<-function(dat,labels,cols,scale=c("row","column","none"),r
     heatmap_plot<-as.ggplot(do.call(Heatmap,c(list(matrix=heatmap_dat,show_row_names=F,show_column_names=F),heatmap_params)))+labs(title = "heatmap")
     if(!is.null(labels)){
       top_anno<-HeatmapAnnotation(df=data.frame(label=labels),col=list(label=cols))
-      heatmap_plot<-as.ggplot(do.call(Heatmap,c(list(matrix=heatmap_dat,name="expressions",show_row_names=F,show_column_names=F,top_annotation=top_anno),heatmap_params)))+labs(title = "heatmap")
+      heatmap_plot<-do.call(
+        Heatmap,
+        c(list(matrix=heatmap_dat,
+               name="expressions",
+               show_row_names=F,
+               show_column_names=F,
+               top_annotation=top_anno,
+               column_title = "Hierarchical Clustering",
+               column_title_gp = gpar(fontface = "bold")),heatmap_params))
     }
     plots[["heatmap"]]=heatmap_plot
   }

@@ -35,7 +35,14 @@
 #'   method ="limma_trend")
 #'
 #'
-dge_limma<-function(expressions,is_rawcount=FALSE,is_logged=T,normalize=FALSE,sample_frequency_threshold=0.5,clinic_info,ID_col,group_col,covariate_col,block_col,contrasts,method=c("limma_trend","limma_voom")){
+dge_limma<-function(expressions,is_rawcount=FALSE,is_logged=T,normalize=FALSE,sample_frequency_threshold=0.5,
+                    clinic_info,
+                    ID_col,
+                    group_col,
+                    covariate_col,
+                    block_col,
+                    contrasts,
+                    method=c("limma_trend","limma_voom")){
   require(limma)
   require(edgeR)
   require(DESeq2)
@@ -43,7 +50,7 @@ dge_limma<-function(expressions,is_rawcount=FALSE,is_logged=T,normalize=FALSE,sa
   stopifnot("group column was not found in clinic_info"=group_col %in% colnames(clinic_info))
   clinic_info[[group_col]]<-factor(clinic_info[[group_col]])
   if(!missing(covariate_col)) {
-    stopifnot("covariate column was not found in clinic_info"=covariate_col %in% colnames(clinic_info))
+    stopifnot("covariate column was not found in clinic_info" = covariate_col %in% colnames(clinic_info))
     clinic_info[[covariate_col]]<-factor(clinic_info[[covariate_col]])
     if(any(levels(clinic_info[[covariate_col]]) %in% levels(clinic_info[[group_col]]))){clinic_info[[covariate_col]]<-factor(paste(clinic_info[[covariate_col]],"_",sep=""))}
     formula<-paste(paste("~",covariate_col,sep="+"),group_col,sep="+")
@@ -73,7 +80,7 @@ dge_limma<-function(expressions,is_rawcount=FALSE,is_logged=T,normalize=FALSE,sa
     stopifnot("block column was not found in clinic_info"=block_col %in% colnames(clinic_info))
     clinic_info[[block_col]]<-factor(clinic_info[[block_col]])
   }
-  stopifnot("expression colnames wass not match ID column of clinic_info"=all(colnames(expressions)==clinic_info[[ID_col]]))
+  stopifnot("expression colnames do not match ID column of clinic_info"=all(colnames(expressions)==clinic_info[[ID_col]]))
   method=match.arg(method)
   if(is_rawcount){
     dge <- DGEList(counts=expressions)

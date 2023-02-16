@@ -25,24 +25,29 @@ reassignNA=function(x,y){
 #' @param data_mx Omic data with features as row and samples as columns.
 #' @param nGroupMax Maximum number of unique value of an attribute for this attribute to be included.
 #' @param essentialOnly Only essential metadata will be selected for annotation
+#' @param tracks Names of attributes selected to be shown as tracks. Will be override if essentialOnly is TRUE. Attributes still obeys nGroupMax rule.
+#'
 #' @import ComplexHeatmap dplyr
 #' @importFrom cols4all c4a
 #' @return heatmap annotation object
 #' @export
 #'
-getHeatMapAnnotation=function(sampleAttr,data_mx=NULL,nGroupMax=10,essentialOnly=F){
+getHeatMapAnnotation=function(sampleAttr,data_mx=NULL,nGroupMax=10,essentialOnly=F,tracks=vector(mode = "character")){
   if(!is.null(data_mx)){
     sampleAttr$colSum=colSums(data_mx)
     sampleAttr$max=apply(data_mx,2,max)
     sampleAttr$median=apply(data_mx,2,median)
     sampleAttr$mad=apply(data_mx,2,mad)
   }
+  if(length(tracks)>0){
+    sampleAttr=sampleAttr[,tracks]
+  }
   feature.names=apply(sampleAttr, c(2), function(x) length(table(x)))
   feature.names=feature.names[sapply(sampleAttr[names(feature.names)],is.numeric)|(feature.names<=nGroupMax&feature.names>1)]
   feature.names=names(feature.names)
   feature.names.surr=tolower(setNames(gsub("[-_ \t\n\r\v\f]","",feature.names),feature.names))
   if(essentialOnly){
-    ind=grep("survival|age|stage|diagn|event|progression|pfs|time|point|protocol|gender|RECIST|response|vital",feature.names.surr,ignore.case = T)
+    ind=grep("survival|age$|stage|diagn|event|progression|pfs|time|point|protocol|gender|RECIST|response|vital",feature.names.surr,ignore.case = T)
     ind=c(ind,which(feature.names.surr=="os"))
     feature.names=feature.names[ind]
     feature.names.surr=feature.names.surr[ind]
@@ -111,4 +116,71 @@ MRNsurr=function(x,seed=NULL){
   set.seed(seed)
   levels(x)=paste("pt", sample(1:nlevels(x)), sep = "")
   return(as.vector(x))
+}
+
+#' change column names
+#'
+#' @param x - Data matrix
+#' @param ind - vector of index of colnames needed to be changed
+#' @param newNames - new column names
+#' @return data matrix with changed column names
+#' @export
+changeColNames=function(x,ind,newNames){
+  colnames(x)[ind]=newNames
+  return(x)
+}
+
+#' getFill
+#'
+#' @param x The data matrix or data frame
+#' @param byColumn Boolean: whether the function done by column
+#'
+#' @return
+#' @export
+#'
+getFill=function(x,byColumn=F){
+  if(byColumn){
+    fill=apply(x, 2, function(x) sum(is.na(x)))/nrow(x)
+    names(fill)=colnames(x)
+  }else{
+    fill=apply(x, 1, function(x) sum(is.na(x)))/ncol(x)
+    names(fill)=rownames(x)
+  }
+
+  return(1-fill)
+}
+
+
+#' 2-sample t-test with only group statistics
+#'
+#' @param m1 the sample means of group 1
+#' @param m2 the sample means of group 2
+#' @param s1 the sample standard deviations of group 1
+#' @param s2 the sample standard deviations of group 2
+#' @param n1 sample size of group 1
+#' @param n2 sample size of group 2
+#' @param m0 the null value for the difference in means to be tested for. Default is 0.
+#' @param equal.variance whether or not to assume equal variance. Default is FALSE.
+#'
+#' @return a named vector consisting "Difference of means", "Std Error", "t", "p-value".
+#' @export
+#'
+#' @examples
+t_test2 <- function(m1,m2,s1,s2,n1,n2,m0=0,equal.variance=FALSE)
+{
+  if( equal.variance==FALSE )
+  {
+    se <- sqrt( (s1^2/n1) + (s2^2/n2) )
+    # welch-satterthwaite df
+    df <- ( (s1^2/n1 + s2^2/n2)^2 )/( (s1^2/n1)^2/(n1-1) + (s2^2/n2)^2/(n2-1) )
+  } else
+  {
+    # pooled standard deviation, scaled by the sample sizes
+    se <- sqrt( (1/n1 + 1/n2) * ((n1-1)*s1^2 + (n2-1)*s2^2)/(n1+n2-2) )
+    df <- n1+n2-2
+  }
+  t <- (m1-m2-m0)/se
+  dat <- c(m1-m2, se, t, 2*pt(-abs(t),df))
+  names(dat) <- c("Difference of means", "Std Error", "t", "p-value")
+  return(dat)
 }

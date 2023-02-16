@@ -16,15 +16,13 @@ require(htmltools)
 expressions_file = system.file("extdata/expressions.csv",package = "expr")
 RNA_sample_info_file = system.file("extdata/RNA_sample_info.csv",package = "expr")
 RNA_clinic_info_file = system.file("extdata/RNA_clinic_info.csv",package = "expr")
-protein_coding_ensemble2symbol_file = system.file("extdata/protein_coding_ensemble2symbol.csv",package = "expr")
-protein_coding_gene_info_file=system.file("extdata/hg19_ncbi_protein_coding_gene_info.txt",package = "expr")
 
 RNA_sample_info<-read.csv(RNA_sample_info_file,header=T,stringsAsFactors = F,check.names = F)
 RNA_clinic_info<-read.csv(RNA_clinic_info_file,header=T,stringsAsFactors = F,check.names = F)
 RNA_sample_info=table_org(list(RNA_sample_info,RNA_clinic_info))
 expressions<-read.csv(expressions_file,header=T,stringsAsFactors = F,check.names = F)
-protein_coding_ensemble2symbol<-read.csv(protein_coding_ensemble2symbol_file,header=T,stringsAsFactors = F,check.names = F)
-protein_coding_gene_info=read.table(protein_coding_gene_info_file,header=T,sep="",stringsAsFactors = F,check.names = F)
+load(system.file("extdata/protein_coding_ensemble2symbol.RData",package = "expr"))
+load(system.file("extdata/protein_coding_gene_info.RData",package = "expr"))
 
 # set param
 paramInput=data.frame(
