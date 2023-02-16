@@ -42,3 +42,34 @@ View package vignette with `browseVignettes("expr")` in Rstudio console, or [her
 **vignette**
 - The package vignette showcase exprClean in making RNA analysis a pipeline.  Added a k-mean clustering measure to auto-detect batch effect as an alternative for manual visualization. Manual confirmation still recommended.
 - The package vignette can be easily customized to generate one-click html or pdf report for user datasets.
+
+## Notes 2/1/2023
+**functions**
+- fixed error: in `prepare_clean_RNA_sample_info_and_protein_expressions()`, if `gene_id_col="rowname"`, sequenced_RNA_samples returns NA at line 53.
+
+## Notes 2/15/2023
+**Added exported functions**
+- NbClust
+- consensus_immunedeconvolute
+- estimate_bestNumberofClusters
+- map_clusters
+- consensusCluster
+- gsea
+- MRNsurr
+- getHeatMapAnnotation
+- reassignNA
+- table_org
+- zscoreData
+- changeColNames
+- getFill
+- t_test2
+
+**Edits**
+1. getHeatmapAnnotations: added param track - for selecting meta data of interest as track input.
+2. Moved “protein coding ensemble to symbol” file and “hg19 ncbi protein coding gene info” to `data/ ` as RData to reduce package size.
+
+**Fixed**
+1.  In function `estimate_bestNumberofClusters()`, index_for_NbClust<- c(…,“rubbin”,..)should be “rubin”.
+2. In function `map_clusters()`: used `apply(cluster_table,1,max)` instead of `rowMaxs(cluster_table), ` to reduce package dependencies.
+3. In function `multiCluster()`: fixed below error by individual indices (adding param “allow1=T” in sourced `mcl_clusters()` ).
+    1. `Error in if ((res[ncP - min_nc + 1, 15] <= resCritical[ncP - min_nc +  : missing value where TRUE/FALSE needed” `
