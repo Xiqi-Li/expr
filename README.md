@@ -43,10 +43,13 @@ View package vignette with `browseVignettes("expr")` in Rstudio console, or [her
 - The package vignette showcase expr in making RNA analysis a pipeline.  Added a k-mean clustering measure to auto-detect batch effect as an alternative for manual visualization. Manual confirmation still recommended.
 - The package vignette can be easily customized to generate one-click html or pdf report for user datasets.
 
+<<<<<<< HEAD
 ## Notes 2/1/2023
 **functions**
 - fixed error: in `prepare_clean_RNA_sample_info_and_protein_expressions()`, if `gene_id_col="rowname"`, sequenced_RNA_samples returns NA at line 53.
 
+=======
+>>>>>>> 11bec25a849246f51d8c93fe8c661b4517e92324
 ## Notes 2/15/2023
 **Added exported functions**
 - NbClust
