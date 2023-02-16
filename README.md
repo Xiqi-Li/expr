@@ -40,7 +40,7 @@ View package vignette with `browseVignettes("expr")` in Rstudio console, or [her
   2) Results were sperated into plots and analysis responses in the function output.
 
 **vignette**
-- The package vignette showcase exprClean in making RNA analysis a pipeline.  Added a k-mean clustering measure to auto-detect batch effect as an alternative for manual visualization. Manual confirmation still recommended.
+- The package vignette showcase expr in making RNA analysis a pipeline.  Added a k-mean clustering measure to auto-detect batch effect as an alternative for manual visualization. Manual confirmation still recommended.
 - The package vignette can be easily customized to generate one-click html or pdf report for user datasets.
 
 ## Notes 2/1/2023
