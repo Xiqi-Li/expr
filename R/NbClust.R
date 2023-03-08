@@ -2,6 +2,7 @@
 
 #' NbClust
 #' @description provides 30 indices for determining the number of clusters and proposes to user the best clustering scheme from the different results obtained by varying all combinations of number of clusters, distance measures, and clustering methods.
+#'
 #' @param data matrix or dataset
 #' @param diss dissimilarity matrix to be used. By default, \code{diss=NULL}, but if it is replaced by a dissimilarity matrix, distance should be "NULL".
 #' @param distance the distance measure to be used to compute the dissimilarity matrix. This must be one of: "euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski" or "NULL". By default, distance="euclidean".
@@ -9,21 +10,23 @@
 #' @param max.nc maximal number of clusters, between 2 and (number of objects - 1), greater or equal to min.nc. By default, max.nc=15.
 #' @param method the cluster analysis method to be used. This should be one of: "ward.D", "ward.D2", "single", "complete", "average", "mcquitty", "median", "centroid", "kmeans".
 #' @param index the index to be calculated. This should be one of : "kl", "ch", "hartigan", "ccc", "scott", "marriot", "trcovw", "tracew", "friedman",  "rubin", "cindex",  "db", "silhouette", "duda", "pseudot2", "beale",  "ratkowsky", "ball", "ptbiserial", "gap", "frey", "mcclain", "gamma", "gplus", "tau", "dunn", "hubert", "sdindex", "dindex", "sdbw", "all" (all indices except GAP, Gamma, Gplus and Tau), "alllong" (all indices with Gap, Gamma, Gplus and Tau included).
+#' @param plotOP whether to generate plots.
 #' @param alphaBeale significance value for Beale's index.
+#'
 #' @importFrom graphics par
 #' @importFrom stats as.dist complete.cases cov cutree dist hclust kmeans median na.omit pf runif sd var
-#' @return \value{
-#' \item{All.index}{Values of indices for each partition of the dataset obtained with a number of
-#'   clusters between min.nc and max.nc.}
-#' \item{All.CriticalValues}{ Critical values of some indices for each partition obtained with a number of clusters between min.nc and max.nc. }
-#' \item{Best.nc}{ Best number of clusters proposed by each index and the corresponding index value.}
-#' \item{Best.partition}{Partition that corresponds to the best number of clusters}
+#' @return  list of values:
+#' \itemize{
+#'  \item{All.index}{Values of indices for each partition of the dataset obtained with a number of clusters between min.nc and max.nc.}
+#'  \item{All.CriticalValues}{ Critical values of some indices for each partition obtained with a number of clusters between min.nc and max.nc. }
+#'  \item{Best.nc}{ Best number of clusters proposed by each index and the corresponding index value.}
+#'  \item{Best.partition}{Partition that corresponds to the best number of clusters}
 #' }
 #'
 #' @export
 #'
 #'
-NbClust <-function(data = NULL, diss=NULL, distance ="euclidean", min.nc=2, max.nc=15, method =NULL, index = "all", alphaBeale = 0.1)
+NbClust <-function(data = NULL, diss=NULL, distance ="euclidean", min.nc=2, max.nc=15, method =NULL, index = "all", alphaBeale = 0.1,plotOP=FALSE)
 {
 
   x<-0
@@ -2165,6 +2168,7 @@ NbClust <-function(data = NULL, diss=NULL, distance ="euclidean", min.nc=2, max.
     nc.Hubert  <- 0.00
     indice.Hubert  <- 0.00
     #x11()
+    if(plotOP){
     par(mfrow = c(1,2))
     plot(x_axis,res[,27], tck=0, type="b", col="red", xlab= expression(paste("Number of clusters ")), ylab= expression(paste("Hubert Statistic values")))
     plot(DiffLev[,1],DiffLev[,10], tck=0, type="b", col="blue", xlab= expression(paste("Number of clusters ")), ylab= expression(paste("Hubert statistic second differences")))
@@ -2172,6 +2176,7 @@ NbClust <-function(data = NULL, diss=NULL, distance ="euclidean", min.nc=2, max.
                 In the plot of Hubert index, we seek a significant knee that corresponds to a
                 significant increase of the value of the measure i.e the significant peak in Hubert
                 index second differences plot.", "\n", "\n"))
+    }
   }
 
   nc.sdindex<-indice.sdindex<-0
@@ -2191,13 +2196,15 @@ NbClust <-function(data = NULL, diss=NULL, distance ="euclidean", min.nc=2, max.
     nc.Dindex <- 0.00
     indice.Dindex<- 0.00
     #x11()
-    par(mfrow = c(1,2))
-    plot(x_axis,res[,29], tck=0, type="b", col="red", xlab= expression(paste("Number of clusters ")), ylab= expression(paste("Dindex Values")))
-    plot(DiffLev[,1],DiffLev[,12], tck=0, type="b", col="blue", xlab= expression(paste("Number of clusters ")), ylab= expression(paste("Second differences Dindex Values")))
-    cat(paste ("*** : The D index is a graphical method of determining the number of clusters.
+    if(plotOP){
+      par(mfrow = c(1,2))
+      plot(x_axis,res[,29], tck=0, type="b", col="red", xlab= expression(paste("Number of clusters ")), ylab= expression(paste("Dindex Values")))
+      plot(DiffLev[,1],DiffLev[,12], tck=0, type="b", col="blue", xlab= expression(paste("Number of clusters ")), ylab= expression(paste("Second differences Dindex Values")))
+      cat(paste ("*** : The D index is a graphical method of determining the number of clusters.
                 In the plot of D index, we seek a significant knee (the significant peak in Dindex
                 second differences plot) that corresponds to a significant increase of the value of
                 the measure.", "\n", "\n"))
+      }
   }
 
   nc.SDbw<-indice.SDbw<-0

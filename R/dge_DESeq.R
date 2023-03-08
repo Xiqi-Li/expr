@@ -13,6 +13,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' data(woodman)
 #' protein_expressions=2^(log2_expressions)
 #' results<-ge_DESeq(
@@ -21,7 +22,7 @@
 #'    ID_col = "Sample_ID",
 #'    group_col = "APOLLO_TIMPOINT",
 #'    contrasts = c("TP2-Baseline"))
-#'
+#' }
 
 dge_DESeq<-function(expressions,sample_frequency_threshold=0.5,clinic_info,ID_col,group_col,covariate_col,block_col,contrasts){
   require(limma)

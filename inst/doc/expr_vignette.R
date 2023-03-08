@@ -13,7 +13,7 @@ require(dplyr)
 require(htmltools)
 
 ## ----load-and-clean-data------------------------------------------------------
-expressions_file = system.file("extdata/expressions.csv",package = "expr")
+expressions_file = gzfile(system.file("extdata/expressions.csv.gz",package = "expr"),'rt')
 RNA_sample_info_file = system.file("extdata/RNA_sample_info.csv",package = "expr")
 RNA_clinic_info_file = system.file("extdata/RNA_clinic_info.csv",package = "expr")
 

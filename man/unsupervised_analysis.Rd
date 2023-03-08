@@ -60,6 +60,7 @@ unsupervised_analysis(
 MAP, TSNE, PCA, MDS and unsupervised clustering of expressions
 }
 \examples{
+\dontrun{
 results<-unsupervised_analysis(unsupervised_data,labels=clean_RNA_sample_info$PROTOCOL)
 # export figure
 tiff(filename ="unsupervised_cluster.tiff",width = 12,height=8,units = "in",res=300,compression = "lzw")
@@ -73,5 +74,6 @@ grid.arrange(arrangeGrob(
   cowplot::get_legend(results$plots$umap+theme(legend.position = "top")),
   nrow = 2, heights = c(12, 1))
 dev.off()
+}
 
 }

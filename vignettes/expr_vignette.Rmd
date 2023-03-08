@@ -36,7 +36,7 @@ This vignette documents the unsupervised analysis pipeline for RNA expression da
 ## Prepare clean sample info and expression matrix
 #### Load data and prepare clean RNA sample info and protein expressions with specified parameters.
 ```{r load-and-clean-data}
-expressions_file = system.file("extdata/expressions.csv",package = "expr")
+expressions_file = gzfile(system.file("extdata/expressions.csv.gz",package = "expr"),'rt')
 RNA_sample_info_file = system.file("extdata/RNA_sample_info.csv",package = "expr")
 RNA_clinic_info_file = system.file("extdata/RNA_clinic_info.csv",package = "expr")
 

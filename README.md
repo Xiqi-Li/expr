@@ -20,6 +20,26 @@ With SSH key set up:
 ## Usage
 View package vignette with `browseVignettes("expr")` in Rstudio console, or [here](http://127.0.0.1:10041/library/expr/doc/expr_vignette.html)
 
+## Run pipeline
+The expression analysis pipeline saves all outputs in your current working directory.
+The initial input should be formatted as an RData file, consisting:
+
+1. object named "gene_expressions" - the expression matrix or data frame with genes as row names and sample names as column names
+2. object named "sampleAttr" - the sample meta data table, samples by row. ID columns are required for both sample and patient.
+
+Follow below code to generate an example RData file.
+```
+gene_expressions = read.csv(gzfile(system.file("extdata/expressions.csv.gz",package = "expr"),'rt'),row.names = 1,check.names = F)
+RNA_sample_info<-read.csv(system.file("extdata/RNA_sample_info.csv",package = "expr"),header=T,stringsAsFactors = F,check.names = F)
+RNA_clinic_info<-read.csv(system.file("extdata/RNA_clinic_info.csv",package = "expr"),header=T,stringsAsFactors = F,check.names = F)
+sampleAttr=expr::table_org(list(RNA_sample_info,RNA_clinic_info))
+save(gene_expressions,sampleAttr,file = "meso.RData")
+```
+To run the pipeline, execute:
+```
+runExprPPL()
+```
+
 ## Development
 - This package is documented with [roxygen2](https://cran.r-project.org/web/packages/roxygen2/vignettes/roxygen2.html). Before pushing a commit, 'Cmd + Shift + B' to generate document, then 'Cmd + Shift + B' to build the package. Keep new functions going!
 - Package tests are as good as how you write it. Please kindly report issues under "issue" tab every time an error is encountered.
@@ -73,3 +93,6 @@ View package vignette with `browseVignettes("expr")` in Rstudio console, or [her
 2. In function `map_clusters()`: used `apply(cluster_table,1,max)` instead of `rowMaxs(cluster_table), ` to reduce package dependencies.
 3. In function `multiCluster()`: fixed below error by individual indices (adding param “allow1=T” in sourced `mcl_clusters()` ).
     1. `Error in if ((res[ncP - min_nc + 1, 15] <= resCritical[ncP - min_nc +  : missing value where TRUE/FALSE needed” `
+    
+## Notes 2/15/2023
+

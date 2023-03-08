@@ -100,7 +100,9 @@ fgseatableplot<-function (pathways, stats, fgseaRes, gseaParam = 1, colwidths = 
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' results<-gsea(statistics,pathways=hallmark_pathway)
+#' }
 #'
 gsea<-function(statistics,output_dir=".",logFC_col="logFC",pval_col="P.Value",pathways,enrichment_padj_cutoff=0.05,pathway_gene_table_file,fgseatableplot_file="fgseatableplot.tiff",enrich_pathways="up2down2",enrichment_map=T,pval_cutoff=0.05,FC_cutoff=1.5,kappa_cutoff=0.3,...){
   if(!dir.exists(output_dir)){dir.create(output_dir,recursive = T)}

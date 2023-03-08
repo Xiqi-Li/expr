@@ -24,6 +24,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' data(woodman)
 #' clean_log2_protein_expressions=log2_expressions
 #' results<-dge_limma(
@@ -33,6 +34,7 @@
 #'   group_col = "APOLLO_TIMPOINT",
 #'   contrasts = c("TP2-Baseline"),
 #'   method ="limma_trend")
+#' }
 #'
 #'
 dge_limma<-function(expressions,is_rawcount=FALSE,is_logged=T,normalize=FALSE,sample_frequency_threshold=0.5,

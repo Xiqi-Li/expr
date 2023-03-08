@@ -1,13 +1,11 @@
 context("Test functions to prepare clean RNA sample info and protein expressions")
 
-expressions_file = system.file("extdata/expressions.csv",package = "expr")
+expressions_file = gzfile(system.file("extdata/expressions.csv.gz",package = "expr"),"rt")
 RNA_sample_info_file = system.file("extdata/RNA_sample_info.csv",package = "expr")
-protein_coding_ensemble2symbol_file = system.file("extdata/protein_coding_ensemble2symbol.csv",package = "expr")
 
-
-RNA_sample_info<-read.csv(RNA_sample_info_file,hdge_edgeReader=T,stringsAsFactors = F,check.names = F)
+RNA_sample_info<-read.csv(RNA_sample_info_file,header=T,stringsAsFactors = F,check.names = F)
 expressions<-read.csv(expressions_file,header=T,stringsAsFactors = F,check.names = F)
-protein_coding_ensemble2symbol<-read.csv(protein_coding_ensemble2symbol_file,header=T,stringsAsFactors = F,check.names = F)
+load(system.file("extdata/protein_coding_ensemble2symbol.RData",package = "expr"))
 
 test_that("prepare_clean_RNA_sample_info_and_protein_expressions can produce matching info and expression tables", {
   expr=expression(prepare_clean_RNA_sample_info_and_protein_expressions(RNA_sample_info=RNA_sample_info,sample_id_col = "Sample_ID",expressions = expressions,gene_id_col = "gene_id",

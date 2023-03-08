@@ -1,6 +1,7 @@
 #' estimate best number of clusters
 #'
 #' @description estimate the best number of cluster for clustering, using 30 indices from NbClust::NbClust
+#'
 #' @param data \code{data.frame()} or \code{matrix()}. Gene expression data (or matrix).
 #' @param scale \code{character()}. Direction for scale data. Default ="row".
 #' @param data_preTreat \code{logical()}. If TRUE, data will be PCA transformed; Components whose cumulative sum of variance reach variance_explained_cutoff will be kept. Default FALSE.
@@ -8,13 +9,16 @@
 #' @param variance_explained_cutoff \code{numeric()}. If data_preTreat is TRUE, components in PCA transformed data matrix whose cumulative sum of variance should reach this value. default=0.8.
 #' @param method \code{character()}.The clustering method to be used. This should be one of: "ward.D", "ward.D2", "single", "complete", "average", "mcquitty", "median", "centroid", "kmeans". Default = "complete".
 #' @param min.nc \code{numeric()}. Minimal number of clusters, between 1 and (number of objects - 1), default=2.
+#' @param plotOP \code{logical()}. Whether to output plots.
 #' @param max.nc \code{numeric()}. Maximal number of clusters, between 2 and (number of objects - 1), greater or equal to min.nc. By default, max.nc=15.
-#' @param ... parameters to pass on to NbClust.
+#'
 #' @return \code{list()} containing \code{Best.nc()} (statistics for various indices) and \code{Best.NumberofCluster()} (best number of clusters).
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' result<-estimate_bestNumberofClusters(data=data,scale='none',data_preTreat = F,max.nc = 8)
+#' }
 estimate_bestNumberofClusters<-function(
     data,
     scale=c("row","column","none"),
@@ -23,7 +27,8 @@ estimate_bestNumberofClusters<-function(
     variance_explained_cutoff=0.8,
     method="complete",
     min.nc=2,
-    max.nc=15
+    max.nc=15,
+    plotOP=FALSE
     ){
   if(ncol(data)<nrow(data)){cat("sample space is less than feature space, reduction of feature space using PCA would be recommended!\n\n")}
   scale=match.arg(scale)
@@ -41,7 +46,7 @@ estimate_bestNumberofClusters<-function(
     pca_res<-PCAtools::pca(t(data),removeVar = removeVar)
     n_components<-min(sum(cumsum(pca_res$variance)<variance_explained_cutoff)+1,nrow(data))
     data<-scale(pca_res$rotated[,pca_res$components[1:n_components]])
-    res<-NbClust(data,  min.nc=min.nc, max.nc=max.nc, method = method, index = "all",...)
+    res<-NbClust(data,  min.nc=min.nc, max.nc=max.nc, method = method, index = "all",plotOP = plotOP)
     bestNumberofCluster<-as.integer(names(which.max(table(as.numeric(res$Best.nc["Number_clusters",])))))
   }else{
     index_for_NbClust<-c("kl","ch","hartigan",'ccc',"scott","marriot","trcovw","tracew","friedman","rubin",
@@ -49,11 +54,12 @@ estimate_bestNumberofClusters<-function(
                          "frey","mcclain","gamma","gplus","tau","dunn","hubert","sdindex",'dindex',"sdbw")
   res<-lapply(index_for_NbClust,function(ind){
       res<-tryCatch(
-        {NbClust(data,method=method,index=ind,min.nc = min.nc,max.nc = max.nc)$Best.nc},
+        {NbClust(data,method=method,index=ind,min.nc = min.nc,max.nc = max.nc,plotOP = plotOP)$Best.nc},
         error=function(e){return(c("Number_clusters"=NA,"Value_Index"=NA))})
       # if(is.null(res)){return(c("Number_clusters"=NA,"Value_Index"=NA))};
       return(res)})
     names(res)<-index_for_NbClust
+    res=res[!sapply(res,is.null)]
     res<-as.data.frame(res)
     bestNumberofCluster<-as.integer(names(which.max(table(as.numeric(res["Number_clusters",])))))}
   return(list(Best.nc=res,Best.NumberofCluster=bestNumberofCluster))
@@ -136,6 +142,7 @@ skmeansCluster<-function(data,k,...){
 }
 
 nmfCluster<-function(data,k,...){
+  require(NMF)
   data<-(data-min(data,na.rm=T))/(max(data,na.rm=T)-min(data,na.rm=T))
   fit = NMF::nmf(data, rank = k, ...)
   nmf_cluster<-apply(fit@fit@H, 2, which.max)
@@ -161,12 +168,12 @@ somCluster<-function(data,k,...){
 
 #' multiCluster
 #'
-#' @description estimate clustering using multiple clustering algorithms, such as "kmeans","pam","hclust","fuzzy","mclust","apclust","hdbscan","MCL","specc","kkmeans","SKmeans","NMF","SOM"
+#' @description estimate clustering using multiple clustering algorithms, such as "kmeans","pam","hclust","fuzzy","mclust","apclust","hdbscan","MCL","specc","kkmeans","SKmeans","NMF","SOM".
 #' @param data \code{data.frame()} or \code{matrix()}. Gene expression data (or matrix).
 #' @param scale \code{character()}. Direction for scale data. Default ="row".
 #' @param bestnumberofclusters \code{integer(1)}. Optimal number of clusters, if missing, calculated by estimate_bestNumberofClusters.
 #' @param data_preTreat \code{logical()}. If TRUE, data will be PCA transformed; Components whose cumulative sum of variance reach variance_explained_cutoff will be kept. Default FALSE.
-#' @param removeVar \code{numeric()}. Remove this % of variables based on low variance. Default=0.2.
+#' @param removeVar \code{numeric()}. Remove this percentage of variables based on low variance. Default=0.2.
 #' @param variance_explained_cutoff \code{numeric()}. If data_preTreat is TRUE, components in PCA transformed data matrix whose cumulative sum of variance should reach this value. default=0.8.
 #' @param nbclust_method 	the cluster analysis method to be used. This should be one of: "ward.D", "ward.D2", "single", "complete", "average", "mcquitty", "median", "centroid", "kmeans".
 #' @param min.nc minimal number of clusters, between 1 and (number of objects - 1)
@@ -186,10 +193,14 @@ somCluster<-function(data,k,...){
 #' @importFrom ggcorrplot ggcorrplot
 #'
 #' @return list, containing best partition of sample, and co-clusters derived from multiple clustering algorithms.
-
+#'
 #' @export
 #'
-#' @examples multiCluster(data=data,scale='none',data_preTreat = T)
+#' @examples
+#' \dontrun{
+#' multiCluster(data=data,scale='none',data_preTreat = T)
+#' }
+#'
 multiCluster<-function(
     data,
     scale=c("row","column","none"),
@@ -263,7 +274,6 @@ multiCluster<-function(
     skmeans_clusters<-skmeansCluster(data,k=bestnumberofclusters)
   }
   if("nmf" %in% cluster_methods){
-    require(NMF)
     nmf_clusters<-nmfCluster(data_o,k=bestnumberofclusters)
   }
   if("som" %in% cluster_methods){
@@ -283,6 +293,7 @@ multiCluster<-function(
     # The adjusted Rand Index (ARI) should be interpreted as follows: ARI >= 0.90 excellent recovery; 0.80 =< ARI < 0.90 good recovery; 0.65 =< ARI < 0.80 moderate recovery; ARI < 0.65 poor recovery
     result[["rand.plot"]]=p
     result[[" base_method"]]=base_cluster_method
+    result[["rand.sim"]]=rand.sim
   }
   res<-as.data.frame(t(as.data.frame(lapply(as.data.frame(t(res)),function(col){map_clusters(col,res[base_cluster_method,],bestnumberofclusters = bestnumberofclusters)[col]}))))
   res_<-as.data.frame(matrix(paste("Cluster_",as.matrix(res),sep=""),nrow=nrow(res)))
@@ -292,9 +303,105 @@ multiCluster<-function(
   return(result)
 }
 
-#' consensusCluster
+
+future_consensusCluster<-function(data,scale=c("row","column","none"),method=c("bootstrap","perturb","combine"),subFeatureSize=0.8,subSampleSize=1,noise=1,cutFUN,nTimes=100,clusters=2,verbose=F,num_cores,...){
+  #	A function that, given a data matrix, returns a vector of cluster assignments. Examples of functions with this behavior are cutHclust, cutKmeans, cutPam, and cutRepeatedKmeans, or kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster
+  # library(future.apply)
+  tictoc::tic("future_consensusCluster:")
+  tictoc::tic("prep:")
+  scale=match.arg(scale)
+  if(scale=="row"){
+    data<-t(scale(t(data)))
+  }
+  if(scale=="column"){
+    data=t(scale(data))
+  }
+  method=match.arg(method)
+  if(missing(cutFUN)){
+    cutFUN=c(kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster)
+  }else{
+    if(any(cutFUN%in%c("cutHclust", "cutKmeans","cutPam","cutRepeatedKmeans"))){
+      require(ClassDiscovery)
+      tmp=setNames(
+        c(kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster,cutHclust,cutKmeans,cutPam,cutRepeatedKmeans),
+        c("kmeans","pam","hclust","fuzzy","mclust","apclust","hdbscan","MCL","specc","kkmeans","skmeans","nmf","som","cutHclust", "cutKmeans","cutPam","cutRepeatedKmeans"))
+    }else{
+      tmp=setNames(
+        c(kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster),
+        c("kmeans","pam","hclust","fuzzy","mclust","apclust","hdbscan","MCL","specc","kkmeans","skmeans","nmf","som"))
+      }
+
+    cutFUN=tmp[cutFUN]
+    }
+  N <- ncol(data)
+  subFeatureSize <- as.integer(nrow(data)*subFeatureSize)
+  subSampleSize <- as.integer(ncol(data)*subSampleSize)
+  tictoc::toc()
+  tictoc::tic("future_lapply:")
+  stableMatch <- matrix(0, nrow = N, ncol = N,)
+  rownames(stableMatch)<-colnames(data)
+  colnames(stableMatch)<-colnames(data)
+
+  if(missing(num_cores)){
+    num_cores <- max(1,future::availableCores()-2)
+  }
+  future::plan(future::multisession, workers = num_cores)
+  loopFun=function(){
+  for (i1 in 1:nTimes) {
+    if(method=="bootstrap"){
+      tempData <- data[sample(1:nrow(data), subFeatureSize, replace = F),sample(1:ncol(data), subSampleSize, replace = F)]
+    }
+    if(method=="perturb"){
+      tempData <- data + matrix(rnorm(N * nrow(data), 0, noise),ncol = N)
+    }
+    if(method=="combine"){
+      tempData <- data[sample(1:nrow(data), subFeatureSize, replace = F),sample(1:ncol(data), subSampleSize, replace = F) ]
+      tempData <- tempData + matrix(rnorm(ncol(tempData) * nrow(tempData), 0, noise),ncol = ncol(tempData))
+    }
+
+    if (verbose) {
+      cat(paste("[", i1, "] ", nrow(tempData), " ", sep = ""))
+      if (i1%%10 == 0)
+        cat("\n")
+    }
+    for(k in clusters){
+      for(cutfun in cutFUN){
+        tempCut <- cutfun(tempData, k=k,...)
+        tempMatch <- matrix(0, nrow = N, ncol = N)
+        rownames(tempMatch)<-colnames(data)
+        colnames(tempMatch)<-colnames(data)
+
+        for (i2 in 1:k) {
+          for(samp1 in names(tempCut)){
+            for(samp2 in names(tempCut)){
+              tempMatch[samp1, samp2] <- ifelse(tempCut[samp1]==tempCut[samp2],1,0)
+            }
+          }
+        }
+        stableMatch <- stableMatch + tempMatch
+      }
+    }
+  }
+    return(stableMatch)
+  }
+  stableMatch =future::value(future::future({loopFun()}))
+  tictoc::toc()
+  # tictoc::tic("fold:")
+  # stableMatch <- future.apply:::fold(tempMatch,function(a,b){a+b})
+  # tictoc::toc()
+
+  if (verbose)
+    cat("\n")
+  result=stableMatch/stableMatch[row(stableMatch)==col(stableMatch)]
+  tictoc::toc()
+  return(result)
+}
+
+
+#' @title consensusCluster
 #'
-#' @description consensus clustering using bootstrap or(and) noise addition of expression
+#' @description consensus clustering using bootstrap or(and) noise addition of expression.
+#'
 #' @param data \code{data.frame()} or \code{matrix()}. Gene expression data.
 #' @param scale \code{character()}. Default ="row", Direction for scale data.
 #' @param method \code{character()}. default="bootstrap",  method used to produce subset expression for clustering
@@ -304,19 +411,30 @@ multiCluster<-function(
 #' @param cutFUN \code{function()}. A vector of clustering functions. Options include:
 #' \itemize{
 #'  \item "Methods in ClassDiscovery package" - "cutHclust", "cutKmeans", "cutPam", and "cutRepeatedKmeans"
-#'  \item "Methods provided by expr" - kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster
+#'  \item "Methods provided by expr" - "kmeansCluster", "pamCluster", "hclustCluster", "fuzzyCluster", "mclustCluster", "apclustCluster", "hdbscanCluster", "mclCluster", "speccCluster", "kkmeansCluster", "skmeansCluster", "nmfCluster", "somCluster"
 #' }
 #' @param nTimes \code{integer()}. Default=100. Times of iteration of Clustering
 #' @param clusters \code{vector(mode = "integer")}. Default=2, predefined number of clusters.
 #' @param verbose \code{logical()}. default \code{FALSE}, if \code{TRUE}, print detailed process information.
 #' @param ... params passed on to cutFUN.
 #'
+#' @importFrom mclust Mclust mclustBIC adjustedRandIndex
+#' @importFrom stats kmeans hclust cutree
+#' @importFrom cluster pam fanny
+#' @importFrom mclust Mclust mclustBIC adjustedRandIndex
+#' @importFrom apcluster apclusterK negDistMat
+#' @importFrom dbscan hdbscan
+#' @importFrom MCL mcl
+#' @importFrom kernlab specc kkmeans
+#' @importFrom skmeans skmeans
+#' @import NMF
 #' @return \code{data.frame()}, containing possibility of co-clustering.
 #' @export
 #'
 #' @examples
-#' results<-consensusCluster(data,method='combine',clusters=4)
-#'
+#' \dontrun{
+#' results<-future_consensusCluster(data,method='combine',clusters=4)
+#' }
 consensusCluster<-function(data,scale=c("row","column","none"),method=c("bootstrap","perturb","combine"),subFeatureSize=0.8,subSampleSize=1,noise=1,cutFUN,nTimes=100,clusters=2,verbose=F,...){
   #	A function that, given a data matrix, returns a vector of cluster assignments. Examples of functions with this behavior are cutHclust, cutKmeans, cutPam, and cutRepeatedKmeans, or kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster
   scale=match.arg(scale)
@@ -330,11 +448,18 @@ consensusCluster<-function(data,scale=c("row","column","none"),method=c("bootstr
   if(missing(cutFUN)){
     cutFUN=c(kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster)
   }else{
-    tmp=setNames(
-      c(kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster),
-      c("kmeans","pam","hclust","fuzzy","mclust","apclust","hdbscan","MCL","specc","kkmeans","skmeans","nmf","som"))
-    cutFUN=tmp[cutFUN]
+    if(any(cutFUN%in%c("cutHclust", "cutKmeans","cutPam","cutRepeatedKmeans"))){
+      require(ClassDiscovery)
+      tmp=setNames(
+        c(kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster,cutHclust,cutKmeans,cutPam,cutRepeatedKmeans),
+        c("kmeans","pam","hclust","fuzzy","mclust","apclust","hdbscan","MCL","specc","kkmeans","skmeans","nmf","som","cutHclust", "cutKmeans","cutPam","cutRepeatedKmeans"))
+    }else{
+      tmp=setNames(
+        c(kmeansCluster,pamCluster,hclustCluster,fuzzyCluster,mclustCluster,apclustCluster,hdbscanCluster,mclCluster,speccCluster,kkmeansCluster,skmeansCluster,nmfCluster,somCluster),
+        c("kmeans","pam","hclust","fuzzy","mclust","apclust","hdbscan","MCL","specc","kkmeans","skmeans","nmf","som"))
     }
+    cutFUN=tmp[cutFUN]
+  }
   N <- ncol(data)
   subFeatureSize <- as.integer(nrow(data)*subFeatureSize)
   subSampleSize <- as.integer(ncol(data)*subSampleSize)
@@ -382,6 +507,4 @@ consensusCluster<-function(data,scale=c("row","column","none"),method=c("bootstr
   result=stableMatch/stableMatch[row(stableMatch)==col(stableMatch)]
   return(result)
 }
-
-
 

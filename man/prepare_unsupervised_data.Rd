@@ -45,5 +45,7 @@ a \code{data.frame()} of a subset of expressions.
 extract qualified subset of data with most variance for unsupervised analysis
 }
 \examples{
+\dontrun{
 results<-prepare_unsupervised_data(log2_expression,method="MAD",mad_top_n=1000,remove_outlier=F)
+}
 }

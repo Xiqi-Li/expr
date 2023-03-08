@@ -26,12 +26,14 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' results<-prepare_clean_RNA_sample_info_and_protein_expressions(RNA_sample_info=RNA_sample_info,sample_id_col = "Sample_ID",expressions = expressions,gene_id_col = "gene_id",                                     #
 #'                                                                mark_library_size = T,adjusted_by_library_size = T,tolerant_library_size_factor = 1.1,                                                             #
 #'                                                                protein_coding_ensemble2symbol_table = protein_coding_ensemble2symbol,ens_id_col = "Gene_ID",symbol_col = "Gene_Symbol",                           #
 #'                                                                mark_purity = T,remove_low_purity_sample = T,low_purity_threshold = 0.3,                                                                           #
 #'                                                                mark_lowexpressgene_pct = T,lowexpression_threshold = 1,remove_sample_with_intense_lowexpressgene = T,outlier_lowexpressgene_pct_factor = 1.5,     #
 #'                                                                remove_lowexpressgene = T,sample_frequency_threshold = 0.5)
+#' }
 #'
 prepare_clean_RNA_sample_info_and_protein_expressions<-function(RNA_sample_info,sample_id_col=c("Sample_ID","Tumor_Sample_Barcode","sample_id","id"),expressions,gene_id_col=c("rowname","gene_id","Gene_ID","ID"),
                                                                 mark_library_size=T,adjusted_by_library_size=T,tolerant_library_size_factor=1.1,

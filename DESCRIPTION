@@ -9,8 +9,13 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
-Suggests: knitr, rmarkdown
+Suggests: knitr, rmarkdown, DT, htmltools, kableExtra
 VignetteBuilder: knitr
 Imports: ComplexHeatmap, PCAtools, RColorBrewer, Rtsne, ggplot2,
         ggplotify, goeveg, gridExtra, ordinal, pheatmap, plotly, umap,
-        immunedeconv, plotly, assertthat, plyranges, rtracklayer
+        immunedeconv, plotly, assertthat, plyranges, rtracklayer,
+        ADAPTS, DESeq2, DeconRNASeq, EPIC, MCL, NMF, apcluster, cluster,
+        cols4all, corto, dbscan, dplyr, 
+        ggcorrplot, ggpubr, kernlab, kohonen, mclust, skmeans,
+        statmod, xCell,limma, sva, future.apply
+        

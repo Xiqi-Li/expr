@@ -16,7 +16,9 @@
 #' @return a \code{data.frame()} of a subset of expressions.
 #' @export
 #' @examples
+#' \dontrun{
 #' results<-prepare_unsupervised_data(log2_expression,method="MAD",mad_top_n=1000,remove_outlier=F)
+#' }
 
 prepare_unsupervised_data<-function(expressions,method=c("MAD","CV","DQ","GUMBEL"),mad_top_n=-1,mad_top_quantile=0.75,cv_top_n=-1,cv_top_mean_quantile=0.5,dq_top_mean_quantile=0.5,dq_top_var_quantile=0.5,gumbel_p_cutoff=0.1,remove_outlier=F){
   library(goeveg)

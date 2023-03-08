@@ -1,0 +1,390 @@
+---
+title: "expr-CleanUp: preparation and batch correction"
+author: "XL"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output:
+  rmdformats::readthedown:
+    toc_depth: 3
+    tabset: true
+    number_sections: true
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+params:
+  batch: APOLLO_COHORT
+  OS: Overall_Survival
+  vital_status: Vital_Status
+  PFS: Progression-free_survival
+  event_for_progression: Event_for_Progression?
+  time_point: Timepoint
+  best_response: Best_Response_(RECIST)
+  best_response_perc: best_response_perc
+  Sample_ID: Sample_ID
+  MRN: MRN
+  mark_library_size: TRUE
+  tolerant_library_size_factor: 1.1
+  mark_purity: TRUE
+  low_purity_threshold: 0.3
+  mark_lowexpressgene_pct: TRUE
+  lowexpression_threshold: 1
+  remove_sample_with_intense_lowexpressgene: TRUE
+  outlier_lowexpressgene_pct_factor: 1.5
+  remove_lowexpressgene: TRUE
+  sample_frequency_threshold: 0.5
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  tidy=TRUE,
+  tidy.opts=list(arrow=TRUE, indent=2,width.cutoff=60),
+  message = FALSE,
+  warning = FALSE,
+  echo = FALSE
+)
+
+require(expr)
+require(dplyr)
+require(htmltools)
+require(plotly)
+require(DT)
+
+rm(list = setdiff(ls(),c("params","expressions","sampleAttr")))
+w.dir <- getwd()
+```
+
+
+# Prepare clean sample info and expression matrix
+```{r load-and-clean-data}
+RNA_sample_info=sampleAttr
+expressions=expressions
+
+# define class of ID attributes
+coerce_ind=names(which(sapply(RNA_sample_info[grep("ID|MRN",colnames(RNA_sample_info))],is.numeric)))
+if(length(coerce_ind)>0){RNA_sample_info[,coerce_ind]=as.character(RNA_sample_info[,coerce_ind])}
+RNA_sample_info$MRNsurr=MRNsurr(RNA_sample_info$MRN,seed = 123)
+
+# set cleaning param
+cleanUpSettings=c("mark_library_size","tolerant_library_size_factor",
+                    "mark_purity","low_purity_threshold",
+                    "mark_lowexpressgene_pct","lowexpression_threshold",
+                    "remove_sample_with_intense_lowexpressgene","outlier_lowexpressgene_pct_factor",
+                    "remove_lowexpressgene","sample_frequency_threshold")
+paramInput=data.frame(params[cleanUpSettings])
+
+# clean
+
+load(system.file("extdata/protein_coding_ensemble2symbol.RData", package = "expr"))
+tmp=expression(do.call(
+  prepare_clean_RNA_sample_info_and_protein_expressions,
+  c(list(
+    RNA_sample_info=RNA_sample_info,
+    expressions = expressions,
+    sample_id_col = "Sample_ID",gene_id_col = "rowname",
+    adjusted_by_library_size = T,ens_id_col = "Gene_ID",symbol_col = "Gene_Symbol",
+    protein_coding_ensemble2symbol_table = protein_coding_ensemble2symbol),
+    as.list(paramInput)
+  )))
+
+consoleOutput=capture.output(results<-eval(tmp),type = c("output"))
+
+
+# data loading summary
+SumInfo=t(data.frame(
+  `Number_of_Cleaned_Samples`=dim(results$clean_RNA_sample_info)[1],
+  `Number_of_Cleaned_Genes`=dim(results$clean_protein_expressions)[1],
+  `Number_of_Deleted_Samples`=dim(results$marked_ori_RNA_sample_info)[1]-dim(results$clean_RNA_sample_info)[1],
+  paramInput[,grep("factor|threshold",colnames(paramInput))],
+  Notes=capture.output(grep("too many low expression genes",consoleOutput,value = T),type = c("output"))))# when no samples were deleted
+t1=knitr::kable(SumInfo,caption = "Data loading summary")%>%kableExtra::kable_styling(position = "center",font_size = "200%")
+
+
+# cleaned RNA sample info
+# remove foundry ID columns enclosing matrix or vector; remove patient ID
+t2=results$clean_RNA_sample_info
+t2=t2[,!colnames(t2) %in% c("protocol_numbers","PID","Core_ID","MRN","Patient_ID","full",grep("file",colnames(t2),value = T))]
+t2.0=t2=t2[gtools::mixedorder(t2$MRNsurr),] %>% 
+  tibble::remove_rownames() %>% tibble::column_to_rownames("Sample_ID") %>% tibble::rownames_to_column("Sample_ID")
+t2=format(t2,nsmall=2) %>%
+  DT::datatable(options = list(
+    # scrollX=T,scrollY=T,
+    initComplete = JS("function(settings, json) {","$(this.api().table().header()).css({'font-size': '12px'});","}")
+    ),
+    rownames = F,
+    # caption = htmltools::tags$caption(
+    #   style = 'caption-side: top; text-align: left; color:black; font-size:200% ;',
+    #   'Sample Info (cleaned)') 
+    ) %>%
+    formatStyle(columns = colnames(.$x$data), `font-size` = '12px')
+
+
+# log2 transformation
+clean_RNA_sample_info<-results[["clean_RNA_sample_info"]]
+clean_protein_expressions<-results[["clean_protein_expressions"]]
+log2_clean_protein_expressions<-log2(clean_protein_expressions+1)
+
+```
+
+```{r load-and-clean-data-res, echo=FALSE, results = 'asis'}
+cat(paste0("## ","Data loading summary."), sep = "\n")
+t1
+
+cat(paste0("\n## ","Cleaned RNA sample info."), sep = "\n")
+t2
+```
+
+# Batch effects
+## Visualization of sample distribution via unsupervised clustering
+In this step, genes with higher variance across data set and a fill rate greater than 0.75 are used for unsupervised analysis.
+```{r data-load}
+
+rm(list = setdiff(ls(),c(lsf.str(), grep("clean|protein_coding_gene_info|0",ls(),value = T))))
+
+# set param
+paramInput=data.frame(method="MAD",mad_top_n = 1000,remove_outlier = F)
+
+# prep data
+unsupervised_data<-prepare_unsupervised_data(
+  expressions=log2_clean_protein_expressions,
+  method=paramInput[["method"]],
+  mad_top_n = paramInput[["mad_top_n"]],
+  remove_outlier = paramInput[["remove_outlier"]])
+# assertthat::are_equal(colnames(unsupervised_data),clean_RNA_sample_info[["Sample_ID"]])
+
+
+```
+
+```{r batch-effect-visualization, fig.show='hide'}
+
+# run analysis
+labels=as.factor(clean_RNA_sample_info$batch)
+unsupervised_results=unsupervised_analysis(unsupervised_data,labels = labels,
+                                           cols = setNames(cols4all::c4a("dark24",nlevels(labels)),levels(labels)))
+
+# generate plots
+p1=unsupervised_results$plots$pca$`3D`%>%layout(title = "PCA", autosize = F)
+
+p2=ggplotly(
+  unsupervised_results$plots$umap +
+    theme_bw() + theme(legend.position='none') +
+    geom_point(aes(text=sprintf("sample: %s", colnames(unsupervised_data)))),
+  tooltip = c("x","y","Label","text")) %>%
+    layout(title = "UMAP")
+
+p3=ggplotly(
+  unsupervised_results$plots$tsne +
+    theme_bw() + theme(legend.position='none') +
+    geom_point(aes(text=sprintf("sample: %s", colnames(unsupervised_data)))),
+  tooltip = c("x","y","Label","text")) %>%
+  layout(title = "tSNE")
+
+p4=ggplotly(
+  unsupervised_results$plots$mds +
+    theme_bw()+ theme(legend.position='none') +
+    geom_point(aes(text=sprintf("sample: %s", colnames(unsupervised_data)))),
+  tooltip = c("x","y","Label","text"))%>%
+  layout(title = "MDS")
+
+p5=unsupervised_results$plots$heatmap
+```
+
+```{r batch-effect-visualization-plots,class.source = 'fold-hide'}
+a=data.frame(x=c(0.2,0.8,0.2,0.8),
+           y=c(1.0,1.0,0.45,0.45),
+           text=c("PCA","UMAP","tSNE","MDS"),
+           xref = "paper",
+           yref = "paper",
+           xanchor = "center",
+           yanchor = "bottom",
+           showarrow = FALSE 
+           )
+annotations = apply(a,1, function(x) lapply(as.list(x),type.convert, as.is=TRUE))
+
+# grid.draw(cowplot::get_legend(unsupervised_results$plots$umap+theme(legend.position = "top")))
+p=subplot(list(style(p1,showlegend = F),p2,p3,p4),nrows = 2,margin = 0.1) %>%
+  layout(title = "Unsupervised clustering before correction",
+         annotations = annotations,
+         scene = list(domain=list(x=c(0,0.5),y=c(0.5,1))))
+
+browsable(tagList(tags$div(
+  style = 'width:100%;height=12;display:block;float:left;',
+  p)))
+```
+
+```{r batch-effect-visualization-plots2,results='asis',fig.width=6,fig.height=3,out.width="100%",dpi=130,class.source = 'fold-hide'}
+cat("<br>")
+p5
+```
+
+## Determine if batch effect exist
+Call Batch effect "exist", if k-means clustering match with batch definition, and that clusters are clearly separated ( evaluated by Silhouette score and withinss/betweenss). If **batch_effect_exist==TRUE**, proceed to correction; Otherwise, results in next section stays blank.
+```{r batch-effect-determination, results = 'asis'}
+kmean.df=(unsupervised_results$ress$umap$layout)
+# calculate Silhouette score for k from 2 to 2 times number of batches and determine the optimal k for clustering
+avg_sil <- function(k) {
+  km.res <- kmeans(kmean.df, centers = k, nstart = 25)
+  ss <- cluster::silhouette(km.res$cluster, dist(kmean.df))
+  mean(ss[, 3])}
+k.values = 2:(2*(length(unique(clean_RNA_sample_info$batch))))
+avg_sil_values <- sapply(k.values, avg_sil)
+km.res <- kmeans(kmean.df, centers = k.values[which.max(avg_sil_values)], nstart = 25)
+
+# test if good clustering
+good=all(c(km.res$betweenss/km.res$totss>0.5,
+      max(avg_sil_values)>0.1))
+
+# test if k-means clustering match with batch definition
+clusters=lapply(unique(km.res$cluster), function(x) names(km.res$cluster)[km.res$cluster==x])
+batches=lapply(unique(clean_RNA_sample_info$batch),
+               function(x) clean_RNA_sample_info$Sample_ID[clean_RNA_sample_info$batch==x])
+hits=c()
+i=0
+for (ncluster in 1:length(clusters)){
+  for (nbatches in 1:length(batches)){
+    hit=length(setdiff(clusters[[ncluster]],batches[[nbatches]]))==0 &
+      length(setdiff(batches[[nbatches]],clusters[[ncluster]]))==0
+    hits=c(hits,hit)
+  }
+}
+matched=any(hits)==T
+
+batch_effect_exist=all(matched,good)
+cat(sprintf("Clustering good?: **%s**<br>
+            Clustering matched?: **%s**<br>
+            Batch effect exists: **%s**<br>",good,matched,batch_effect_exist))
+
+```
+
+## Batch effect correction
+If batch effect exist, attempt to use `limma` and `COMBAT` to correct such effect
+```{r batch-effect-correction}
+unsupervised_resultss=list()
+if(batch_effect_exist){
+  #limma
+  limma_rbe_log2_protein_expressions<-limma::removeBatchEffect(
+    log2_clean_protein_expressions,batch=clean_RNA_sample_info$batch)
+  uns_limma_rbe_log2_protein_expressions<-prepare_unsupervised_data(limma_rbe_log2_protein_expressions,method="MAD",mad_top_n=1000)
+  labels=as.factor(clean_RNA_sample_info$batch)
+  unsupervised_resultss[["limma"]]=unsupervised_analysis(uns_limma_rbe_log2_protein_expressions,labels=labels,cols = setNames(cols4all::c4a("dark24",nlevels(labels)),levels(labels)))
+  #combat
+  combat_rbe_log2_protein_expressions<-sva::ComBat(log2_clean_protein_expressions,batch=clean_RNA_sample_info$batch)
+  uns_combat_rbe_log2_protein_expressions<-prepare_unsupervised_data(combat_rbe_log2_protein_expressions,method="MAD",mad_top_n=1000)
+  unsupervised_resultss[["combat"]]=unsupervised_analysis(uns_combat_rbe_log2_protein_expressions,labels=labels,cols = setNames(cols4all::c4a("dark24",nlevels(labels)),levels(labels)))
+
+
+# generate plots
+p1=p2=p3=p4=p5=list()
+for (method in c("limma","combat")){
+  unsupervised_results=unsupervised_resultss[[method]]
+  p1[[method]]=unsupervised_results$plots$pca$`3D`%>%layout(title = sprintf("PCA %s",method), autosize = F)
+  
+  p2[[method]]=ggplotly(
+  unsupervised_results$plots$umap +
+    theme_bw() + theme(legend.position='none') +
+    geom_point(aes(text=sprintf("sample: %s", colnames(unsupervised_data)))),
+  tooltip = c("x","y","Label","text")) %>%
+    layout(title = sprintf("UMAP %s",method))
+
+  p3[[method]]=ggplotly(
+    unsupervised_results$plots$tsne +
+      theme_bw() + theme(legend.position='none') +
+      geom_point(aes(text=sprintf("sample: %s", colnames(unsupervised_data)))),
+    tooltip = c("x","y","Label","text")) %>%
+    layout(title = sprintf("tSNE %s",method))
+  
+  p4[[method]]=ggplotly(
+    unsupervised_results$plots$mds +
+      theme_bw()+ theme(legend.position='none') +
+      geom_point(aes(text=sprintf("sample: %s", colnames(unsupervised_data)))),
+    tooltip = c("x","y","Label","text"))%>%
+    layout(title = sprintf("MDS %s",method))
+  
+  p5[[method]]=unsupervised_results$plots$heatmap
+}
+}
+```
+
+### Correction result {.tabset}
+#### limma result
+```{r limma-plots,class.source = 'fold-hide'}
+if (batch_effect_exist) {
+a=data.frame(x=c(0.2,0.8,0.2,0.8),
+           y=c(1.0,1.0,0.45,0.45),
+           text=c("PCA","UMAP","tSNE","MDS"),
+           xref = "paper",
+           yref = "paper",
+           xanchor = "center",
+           yanchor = "bottom",
+           showarrow = FALSE 
+           )
+annotations = apply(a,1, function(x) lapply(as.list(x),type.convert, as.is=TRUE))
+
+pp1=p1[["limma"]]
+pp2=p2[["limma"]]
+pp3=p3[["limma"]]
+pp4=p4[["limma"]]
+p=subplot(list(style(pp1,showlegend = F),pp2,pp3,pp4),nrows = 2,margin = 0.1) %>%
+  layout(title = "Unsupervised clustering after correction",
+         annotations = annotations,
+         scene = list(domain=list(x=c(0,0.5),y=c(0.5,1))))
+
+browsable(tagList(tags$div(
+  style = 'width:100%;height=12;display:block;float:left;',
+  p)))
+}
+```
+
+```{r limma-plots2,results='asis',fig.width=6,fig.height=3,out.width="100%",dpi=130,class.source = 'fold-hide'}
+if (batch_effect_exist) {
+cat("<br>")
+p5[["limma"]]
+}
+```
+
+#### COMBAT result
+```{r combat-plots,class.source = 'fold-hide'}
+if (batch_effect_exist) {
+a=data.frame(x=c(0.2,0.8,0.2,0.8),
+           y=c(1.0,1.0,0.45,0.45),
+           text=c("PCA","UMAP","tSNE","MDS"),
+           xref = "paper",
+           yref = "paper",
+           xanchor = "center",
+           yanchor = "bottom",
+           showarrow = FALSE 
+           )
+annotations = apply(a,1, function(x) lapply(as.list(x),type.convert, as.is=TRUE))
+
+pp1=p1[["combat"]]
+pp2=p2[["combat"]]
+pp3=p3[["combat"]]
+pp4=p4[["combat"]]
+p=subplot(list(style(pp1,showlegend = F),pp2,pp3,pp4),nrows = 2,margin = 0.1) %>%
+  layout(title = "Unsupervised clustering after correction",
+         annotations = annotations,
+         scene = list(domain=list(x=c(0,0.5),y=c(0.5,1))))
+
+browsable(tagList(tags$div(
+  style = 'width:100%;height=12;display:block;float:left;',
+  p)))
+}
+```
+
+```{r combat-plots2,fig.width=6,fig.height=3,out.width="100%",dpi=130,class.source = 'fold-hide'}
+if (batch_effect_exist) {
+cat("<br>")
+p5[["combat"]]
+}
+```
+
+```{r save}
+if (batch_effect_exist) {
+  save(batch_effect_exist,log2_clean_protein_expressions,limma_rbe_log2_protein_expressions,combat_rbe_log2_protein_expressions,clean_RNA_sample_info,file = "clean_batchexamined_logRNA.RData")
+}else{
+  save(batch_effect_exist,log2_clean_protein_expressions,clean_RNA_sample_info,file = "clean_batchexamined_logRNA.RData")
+}
+rm(list=ls())
+```

@@ -24,6 +24,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' results<-unsupervised_analysis(unsupervised_data,labels=clean_RNA_sample_info$PROTOCOL)
 #' # export figure
 #' tiff(filename ="unsupervised_cluster.tiff",width = 12,height=8,units = "in",res=300,compression = "lzw")
@@ -37,6 +38,7 @@
 #'   cowplot::get_legend(results$plots$umap+theme(legend.position = "top")),
 #'   nrow = 2, heights = c(12, 1))
 #' dev.off()
+#' }
 #'
 unsupervised_analysis<-function(dat,labels,cols,scale=c("row","column","none"),run_umap=T,umap_params=NULL,umap_config=umap.defaults,run_tsne=T,tsne_params=NULL,run_pca=T,pca_params=NULL,run_mds=T,mds_params=NULL,run_heatmap=T,heatmap_params=NULL){
   library(ggplot2)

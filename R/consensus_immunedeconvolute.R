@@ -17,24 +17,27 @@
 #' @param deconseq_reference \code{data.frame()}. Immune signature for various immune cell type, if deconseq is in the method list, deconseq_reference must be provided
 #' @param timer_indication \code{vector(mode="character")}. A character vector with one indication per sample for TIMER. Indication - one of the TCGA cancer type, such as "UVM", "HNSC", and etc. if timer is in the method list, timer_indication must be provided.
 #' @param method_frequency_cutoff \code{numeric()}. Default 2, cell types were found in a number of methods not less than the cutoff.
-#' @param backround_noise \code{numeric()}. Default 0.00001, cell fraction less than background_noise was regarded as no expression.
+#' @param background_noise \code{numeric()}. Default 0.00001, cell fraction less than background_noise was regarded as no expression.
 #'
-#' @import ADAPTS
+#' @import ADAPTS xCell EPIC DeconRNASeq
 #' @importFrom corto ssgsea
 #'
 #' @return \code{list()}, containing method_frequency table, all deconvolution results from individual methods, and final consensus deconvolution results
 #' @export
 #'
 #' @examples
-#' background_noise=0.00001
-#' celltype_mapping<-xlsx2df(xlsx_file = "/home/harryjerry/Desktop/MyRScripts/Immunecell_signature.xlsx",sheet = "celltype_mapping",endCol = 3,header = T)
-#' bindea_reference<-xlsx2df(xlsx_file = "/home/harryjerry/Desktop/MyRScripts/Immunecell_signature.xlsx",sheet = "Bindea",header = T)
-#' cibersort_reference<-read.table("/home/harryjerry/Desktop/cibersort/LM22.txt",header=T,stringsAsFactors = F,check.names = F,sep="\t",row.names = 1)
-#' danaher_reference<-xlsx2df(xlsx_file = "/home/harryjerry/Desktop/MyRScripts/Immunecell_signature.xlsx",sheet = "Danaher",header = T)
-#' davoli_reference<-xlsx2df(xlsx_file = "/home/harryjerry/Desktop/MyRScripts/Immunecell_signature.xlsx",sheet = "Davoli",header = T)
-#' res<-consensus_immunedeconvolute(expressions,celltype_mapping = celltype_mapping,bindea_reference = bindea_reference,cibersort_reference = cibersort_reference,consensustme_indication = "meso",danaher_reference = danaher_reference,davoli_reference = davoli_reference,timer_indication = "meso",backround_noise = background_noise)
-#
-consensus_immunedeconvolute<-function(expressions,methods=c("abis","bindea","cibersort","consensustme","danaher","davoli","dcq","deconseq","epic","mcpcounter","quantiseq","timer","xcell"),celltype_mapping,bindea_reference,cibersort_reference,consensustme_indication,danaher_reference,davoli_reference,deconseq_reference,timer_indication,method_frequency_cutoff=2,backround_noise=0.00001){
+#' \dontrun{
+#' data("woodman")
+#' load(system.file("extdata/ImSig.RData",package = "expr")) # load immune signature
+#' deconMethods=c("abis","bindea","cibersort","danaher","davoli","dcq","epic","mcpcounter","quantiseq","timer","xcell")
+#' cellular_fraction=consensus_immunedeconvolute(
+#'   expressions=2^log2_expressions-1,
+#'   methods = deconMethods,
+#'   consensustme_indication=indication,
+#'   celltype_mapping =ImSig$celltype_mapping)
+#' }
+#'
+consensus_immunedeconvolute<-function(expressions,methods=c("abis","bindea","cibersort","consensustme","danaher","davoli","dcq","deconseq","epic","mcpcounter","quantiseq","timer","xcell"),celltype_mapping,bindea_reference,cibersort_reference,consensustme_indication,danaher_reference,davoli_reference,deconseq_reference,timer_indication,method_frequency_cutoff=2,background_noise=0.00001){
   results<-list()
   immune_abis<-NULL
   immune_bindea<-NULL
@@ -158,6 +161,7 @@ consensus_immunedeconvolute<-function(expressions,methods=c("abis","bindea","cib
 
   }
   if("epic" %in% methods){
+    require(EPIC)
     cat("running epic\n")
     immune_epic<-immunedeconv::deconvolute(expressions,method="epic",tumor=T,scale_mrna = T)
     assertthat::are_equal(colnames(expressions),colnames(immune_epic)[-1])
@@ -191,13 +195,16 @@ consensus_immunedeconvolute<-function(expressions,methods=c("abis","bindea","cib
   }
 
   if("xcell" %in% methods){
+    require(xCell)
     cat("running xcell\n")
-    immune_xcell<-immunedeconv::deconvolute(expressions,method="xcell",tumor=T,arrays=F)
-    assertthat::are_equal(colnames(expressions),colnames(immune_xcell)[-1])
+    immune_xcell=tryCatch(
+      {immunedeconv::deconvolute(expressions,method="xcell",tumor=T,arrays=F)},
+      error=function(e){return(NULL)})
     results[["xcell"]]<-immune_xcell
   }
 
   immune_consensus<-rbind(immune_abis,immune_bindea,immune_cibersort,immune_consensustme,immune_danaher,immune_davoli,immune_dcq,immune_epic,immune_mcpcounter,immune_quantiseq,immune_timer,immune_xcell)
+  immune_consensus=immune_consensus[complete.cases(immune_consensus),]
   method_frequency<-table(immune_consensus$cell_type)
   results[["method_frequency"]]<-method_frequency
   consensus_cell_type<-setdiff(names(method_frequency[method_frequency>=method_frequency_cutoff]),"uncharacterized cell")

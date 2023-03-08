@@ -1,5 +1,5 @@
 #' example data set
-#'
+#' @description Mesothelioma. set.seed(123);log2_expressions=log2_expressions[sample(rownames(log2_expressions),nrow(log2_expressions)/10),]
 #' @name woodman
 #' @docType data
 #' @keywords data
