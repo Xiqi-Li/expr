@@ -268,7 +268,6 @@ img.DGE=lapply(volcanoPlots, function(x) {
 tabs <- lapply(phenotypes, function(name) {
   shiny::tabPanel(name, htmltools::tagList(
     list(
-    tags$p(paramStr[[name]]),
     img.DGE[[name]],
     tags$h5(sprintf("DGE on %s: %s",phenotype,contrast),style="color:black;"),
     DGE.DT[[name]],
