@@ -256,33 +256,28 @@ DGE.DT[[phenotype]]= stats[sigRow,] %>% format(digits=2)  %>%
 img.gsea=lapply(gseaPlots, function(x) {
   htmltools::plotTag(
   {x},
-  sprintf("%s GSEA: significant pathway", names(x)), width = 400, height = 500, pixelratio=3)
+  sprintf("%s GSEA: significant pathway", names(x)), width = 700, height = 600, pixelratio=3)
 })
 
 img.DGE=lapply(volcanoPlots, function(x) {
   htmltools::plotTag(
   {x},
-  sprintf("%s DGE: volcano plot", names(x)), width = 400, height = 500, pixelratio=3)
+  sprintf("%s DGE: volcano plot", names(x)), width = 600, height = 400, pixelratio=3)
 })
 
 tabs <- lapply(phenotypes, function(name) {
   shiny::tabPanel(name, htmltools::tagList(
     list(
-      tags$div(
-        style = 'width:50%;display:block;float:left;',
-        img.DGE[[name]]),
-      tags$div(
-        style = 'width:50%;display:block;float:left;',
-        img.gsea[[name]]
-        )
-      ),
+    tags$p(paramStr[[name]]),
+    img.DGE[[name]],
     tags$h5(sprintf("DGE on %s: %s",phenotype,contrast),style="color:black;"),
     DGE.DT[[name]],
     DGE.plots[[name]],
     tags$hr(style = "border-top: 1px solid #ccc;"),
     tags$h5(sprintf("GSEA on %s: %s", phenotype, contrast),style="color:black;"),
+    img.gsea[[name]],
     gseaRes.sig[[name]]
-    ))
+    )))
 })
 
 tagList(do.call(shiny::tabsetPanel, tabs))

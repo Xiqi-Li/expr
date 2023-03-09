@@ -94,5 +94,25 @@ runExprPPL()
 3. In function `multiCluster()`: fixed below error by individual indices (adding param “allow1=T” in sourced `mcl_clusters()` ).
     1. `Error in if ((res[ncP - min_nc + 1, 15] <= resCritical[ncP - min_nc +  : missing value where TRUE/FALSE needed” `
     
-## Notes 2/15/2023
+## Notes 3/8/2023
+**Added functions**
+- plotBoxPlot
+- future_consensusCluster (unexported; multicore)
 
+**Added pipeline components**
+- exprCleanUp.Rmd
+- exprMain.Rmd
+- exprlongitudinal.Rmd
+- runPPL.R
+- settingsUI/app.R
+
+**Edits**
+1. In function `consensusCluster()`, changed `cutFun` inputs to character vector.
+2. In function `NbClust()`, added `plotOP` option to control plot output.
+3. Reduced sizes of external files via gz or RData.
+
+**Fixed**
+1. In function `estimate_bestNumberofClusters()` Fixed below error by `res=res[!sapply(res,is.null)]`
+  - `Error in (function (..., row.names = NULL, check.rows = FALSE, check.names = TRUE,  : arguments imply differing number of rows: 2, 0`
+2. In function `consensusCluster()` Fixed below error by using tryCatch: 
+  - `Error in rep(1:k, times = sapply(apclust_clusters@clusters, length)) : invalid 'times' argument.`
