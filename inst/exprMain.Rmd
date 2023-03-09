@@ -113,9 +113,10 @@ if (batch_effect_exist){
     cat("<br>Using uncorrected expression matrix...<br>")
   }
 }else{
-    log2_expressions=log2_clean_protein_expressions
-    cat("<br>Using uncorrected expression matrix...<br>")}
-
+  correctionMetod="none"
+  log2_expressions=log2_clean_protein_expressions
+  cat("<br>Using uncorrected expression matrix...<br>")}
+save(correctionMetod,clean_RNA_sample_info,limma_rbe_log2_protein_expressions,combat_rbe_log2_protein_expressions,log2_clean_protein_expressions,file = "clean_batchexamined_logRNA.RData")
 rm(list = setdiff(ls(),c("params","clean_RNA_sample_info","log2_expressions","metaHeaders")))
 
 

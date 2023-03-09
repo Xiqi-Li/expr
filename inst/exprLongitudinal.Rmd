@@ -83,8 +83,18 @@ require(DT)
 require(plotly)
 
 load("clean_batchexamined_logRNA.RData")
-log2_expressions=log2_clean_protein_expressions
-rm(log2_clean_protein_expressions)
+if (correctionMetod=="limma"){
+  log2_expressions=limma_rbe_log2_protein_expressions
+  cat("<br>Using limma batch-corrected expression matrix...<br>")
+}else if(correctionMetod=="combat"){
+  log2_expressions=combat_rbe_log2_protein_expressions
+  cat("<br>Using ComBat batch-corrected expression matrix...<br>")
+}else{
+  log2_expressions=log2_clean_protein_expressions
+  cat("<br>Using uncorrected expression matrix...<br>")
+}
+rm(list = setdiff(ls(),c("params","clean_RNA_sample_info","log2_expressions","metaHeaders")))
+
 tpheader=grep("tim.*point|TP",ignore.case = T,colnames(clean_RNA_sample_info),value = T)
 clean_RNA_sample_info[,tpheader]=gsub("[-_ \t\n\r\v\f]","",clean_RNA_sample_info[,tpheader])
 
