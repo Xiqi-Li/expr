@@ -29,7 +29,7 @@ params:
     step: 10
   NofK:
     label: "Select number of clusters K for clustering on expression:\n\t If Left blank optimum K will be calculated."
-    value: 2
+    value: !r NA
     input: numeric
     min: 2
     max: !r round(sqrt(dim(sampleAttr)[1]))
@@ -105,18 +105,23 @@ if (batch_effect_exist){
   if (correctionMetod=="limma"){
     log2_expressions=limma_rbe_log2_protein_expressions
     cat("<br>Using limma batch-corrected expression matrix...<br>")
+    save(batch_effect_exist,correctionMetod,clean_RNA_sample_info,limma_rbe_log2_protein_expressions,combat_rbe_log2_protein_expressions,log2_clean_protein_expressions,file = "clean_batchexamined_logRNA.RData")
   }else if(correctionMetod=="combat"){
     log2_expressions=combat_rbe_log2_protein_expressions
     cat("<br>Using ComBat batch-corrected expression matrix...<br>")
+    save(batch_effect_exist,correctionMetod,clean_RNA_sample_info,limma_rbe_log2_protein_expressions,combat_rbe_log2_protein_expressions,log2_clean_protein_expressions,file = "clean_batchexamined_logRNA.RData")
   }else{
     log2_expressions=log2_clean_protein_expressions
     cat("<br>Using uncorrected expression matrix...<br>")
+    save(batch_effect_exist,correctionMetod,clean_RNA_sample_info,log2_clean_protein_expressions,file = "clean_batchexamined_logRNA.RData")
   }
 }else{
   correctionMetod="none"
   log2_expressions=log2_clean_protein_expressions
-  cat("<br>Using uncorrected expression matrix...<br>")}
-save(correctionMetod,clean_RNA_sample_info,limma_rbe_log2_protein_expressions,combat_rbe_log2_protein_expressions,log2_clean_protein_expressions,file = "clean_batchexamined_logRNA.RData")
+  cat("<br>Using uncorrected expression matrix...<br>")
+  save(batch_effect_exist,correctionMetod,clean_RNA_sample_info,log2_clean_protein_expressions,file = "clean_batchexamined_logRNA.RData")
+  }
+
 rm(list = setdiff(ls(),c("params","clean_RNA_sample_info","log2_expressions","metaHeaders")))
 
 
@@ -141,7 +146,7 @@ Correlation plot shows similarity of partitions by all methods in step 2.
 The heat map dendrogram across samples resembles distance matrix of pair-wise sample clustering probability.
 ```{r clustering, include=FALSE}
 unsupervised_expressions<-prepare_unsupervised_data(log2_expressions,method="GUMBEL")
-if(is.na(params$NofK)|params$NofK=="NA"){
+if(is.na(params$NofK)|params$NofK=="NA"|trimws(params$NofK)==""){
     getOptK=function(){
     optK=estimate_bestNumberofClusters(
     unsupervised_expressions,
@@ -260,7 +265,7 @@ for (duration in names(censoring)){
            ggtheme = theme_bw())
   ggsurv$plot=ggsurv$plot +
     labs(title = sprintf("Kaplan-Meier Curve on %s",duration))+
-    annotate("text",x=range(clean_RNA_sample_info[[duration]],na.rm = T)[2]*2.9/4,y=0.81,
+    annotate("text",x=range(clean_RNA_sample_info[[duration]],na.rm = T)[2]*2.9/4,y=0.71,
              label=stats.str,alpha = .7)
     # annotation_custom(tableGrob(stats,theme=ttheme_minimal(base_size = 6)),
     #                   xmin=range(clean_RNA_sample_info[[duration]])[2]*3.8/5,
@@ -405,7 +410,7 @@ cat.phenotype=cat.phenotype[!is.na(tmp)& tmp!="NA"]
 
 load(system.file("extdata/pathway.nano_hallmarkv2022.1.RData",package = "expr"))
 load(system.file("extdata/protein_coding_ensemble2symbol.RData",package = "expr"))
-paramStr=comps_limma=DGE=DGE.plots=DGE.DT=volcanoPlots=gseaRes=gseaRes.sig=gseaPlots=list()
+paramStr=comps_limma=DGE=DGE.plots=DGE.DT=volcanoPlots=gseaRes=gseaRess=split_groups=gseaRes.sig=gseaPlots=list()
 for (phenotype in names(cat.phenotype)){
   
   # set group factor
@@ -419,6 +424,7 @@ for (phenotype in names(cat.phenotype)){
     dimnames(group)=list(rownames(clean_RNA_sample_info),phenotype)
     contrast="Long-Short"
     paramStr[[phenotype]]=sprintf("Spliting threshold: %s ",format(thresh,nsmall=3))
+    split_groups[[phenotype]]=setNames(group[[phenotype]],clean_RNA_sample_info$Sample_ID)
     }
   if (phenotype %in% c("Response")){
     if(cat.phenotype[phenotype]=="stable disease as good response"){
@@ -439,6 +445,7 @@ for (phenotype in names(cat.phenotype)){
       paramStr[[phenotype]]=sprintf("Spliting threshold: %s ",format(0,nsmall=3))
     }
     contrast="Good-Bad"
+    split_groups[[phenotype]]=setNames(group[[phenotype]],clean_RNA_sample_info$Sample_ID)
   }
   
   # DGE
@@ -514,7 +521,7 @@ for (phenotype in names(cat.phenotype)){
   rank=stats %>% #filter(p_value<0.05,abs(Difference_of_means)>paramss$meanDiff.thresh) %>%
     arrange(get(sprintf("%s:logFC",contrast))) %>% select(sprintf("%s:logFC",contrast)) %>%
     tibble::rownames_to_column("x") %>% tibble::deframe()
-  gseaRes<-fgsea(
+  gseaRess[[phenotype]]=gseaRes=fgsea(
     pathways=pathway,
     stats=rank,
     minSize = min(sapply(pathway, length)),
@@ -537,6 +544,7 @@ for (phenotype in names(cat.phenotype)){
   
 }
 
+save(DGE,gseaRess,pathway,split_groups,file = sprintf("gsea_traits.RData"))
 # tabs
 img.gsea=lapply(gseaPlots, function(x) {
   htmltools::plotTag(

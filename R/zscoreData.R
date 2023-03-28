@@ -23,8 +23,8 @@ zscoreData = function(data, ref) {
   # Only metabolites that also occur in the reference population can be z-scored
   data = data[which(rownames(data) %in% rownames(ref)),]
   ref = ref[which(rownames(ref) %in% rownames(data)),]
-  data = data[sort(rownames(data)),]
-  ref = ref[sort(rownames(ref)),]
+  data = as.matrix(data[sort(rownames(data)),])
+  ref = as.matrix(ref[sort(rownames(ref)),])
 
   # Log transform data
   # data = log(data)

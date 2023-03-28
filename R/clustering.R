@@ -46,8 +46,22 @@ estimate_bestNumberofClusters<-function(
     pca_res<-PCAtools::pca(t(data),removeVar = removeVar)
     n_components<-min(sum(cumsum(pca_res$variance)<variance_explained_cutoff)+1,nrow(data))
     data<-scale(pca_res$rotated[,pca_res$components[1:n_components]])
-    res<-NbClust(data,  min.nc=min.nc, max.nc=max.nc, method = method, index = "all",plotOP = plotOP)
-    bestNumberofCluster<-as.integer(names(which.max(table(as.numeric(res$Best.nc["Number_clusters",])))))
+    # res<-NbClust(data,  min.nc=min.nc, max.nc=max.nc, method = method, index = "all",plotOP = plotOP)
+    # # bestNumberofCluster<-as.integer(names(which.max(table(as.numeric(res$Best.nc["Number_clusters",])))))
+    # bestNumberofCluster=max(res$Best.partition)
+    index_for_NbClust<-c("kl","ch","hartigan",'ccc',"scott","marriot","trcovw","tracew","friedman","rubin",
+                         "cindex","db","silhouette","duda","pseudot2","beale","ratkowsky","ball","ptbiserial","gap",
+                         "frey","mcclain","gamma","gplus","tau","dunn","hubert","sdindex",'dindex',"sdbw")
+    res<-lapply(index_for_NbClust,function(ind){
+      res<-tryCatch(
+        {NbClust(data,method=method,index=ind,min.nc = min.nc,max.nc = max.nc,plotOP = plotOP)$Best.nc},
+        error=function(e){return(c("Number_clusters"=NA,"Value_Index"=NA))})
+      # if(is.null(res)){return(c("Number_clusters"=NA,"Value_Index"=NA))};
+      return(res)})
+    names(res)<-index_for_NbClust
+    res=res[!sapply(res,is.null)]
+    res<-as.data.frame(res)
+    bestNumberofCluster<-as.integer(names(which.max(table(as.numeric(res["Number_clusters",])))))
   }else{
     index_for_NbClust<-c("kl","ch","hartigan",'ccc',"scott","marriot","trcovw","tracew","friedman","rubin",
                          "cindex","db","silhouette","duda","pseudot2","beale","ratkowsky","ball","ptbiserial","gap",
@@ -111,7 +125,7 @@ fuzzyCluster<-function(data,k,...){return(cluster::fanny(t(data),k=k,...)$cluste
 mclustCluster<-function(data,k,...){return(mclust::Mclust(t(data),G=k)$classification)}
 apclustCluster<-function(data,k,...){
   apclust_clusters<-apcluster::apclusterK(s=negDistMat(r=2),x=t(data),K=k)
-  apclust_clusters<-rep(1:k,times=sapply(apclust_clusters@clusters,length))[order(unlist(apclust_clusters@clusters))]
+  apclust_clusters<-rep(1:length(apclust_clusters@clusters),times=sapply(apclust_clusters@clusters,length))[order(unlist(apclust_clusters@clusters))]
   names(apclust_clusters)<-colnames(data)
   return(apclust_clusters)
 }
@@ -124,12 +138,14 @@ mclCluster<-function(data,k,...){
 }
 
 speccCluster<-function(data,k,...){
+  require(kernlab)
   specc_clusters<-kernlab::specc(t(data),centers=k,...)@.Data
   names(specc_clusters)<-colnames(data)
   return(specc_clusters)
 }
 
 kkmeansCluster<-function(data,k,...){
+  require(kernlab)
   kkmeans_cluster<-kernlab::kkmeans(t(data),centers=k,...)@.Data
   names(kkmeans_cluster)<-colnames(data)
   return(kkmeans_cluster)
@@ -183,12 +199,12 @@ somCluster<-function(data,k,...){
 #' @importFrom stats kmeans hclust cutree
 #' @importFrom cluster pam fanny
 #' @importFrom mclust Mclust mclustBIC adjustedRandIndex
-#' @importFrom apcluster apclusterK negDistMat
 #' @importFrom dbscan hdbscan
 #' @importFrom MCL mcl
-#' @importFrom kernlab specc kkmeans
 #' @importFrom skmeans skmeans
 #' @import NMF
+#' @import kernlab
+#' @import apcluster
 #' @importFrom kohonen som somgrid
 #' @importFrom ggcorrplot ggcorrplot
 #'
@@ -422,12 +438,12 @@ future_consensusCluster<-function(data,scale=c("row","column","none"),method=c("
 #' @importFrom stats kmeans hclust cutree
 #' @importFrom cluster pam fanny
 #' @importFrom mclust Mclust mclustBIC adjustedRandIndex
-#' @importFrom apcluster apclusterK negDistMat
 #' @importFrom dbscan hdbscan
 #' @importFrom MCL mcl
-#' @importFrom kernlab specc kkmeans
 #' @importFrom skmeans skmeans
 #' @import NMF
+#' @import kernlab
+#' @import apcluster
 #' @return \code{data.frame()}, containing possibility of co-clustering.
 #' @export
 #'
@@ -486,7 +502,10 @@ consensusCluster<-function(data,scale=c("row","column","none"),method=c("bootstr
     }
     for(k in clusters){
       for(cutfun in cutFUN){
-        tempCut <- cutfun(tempData, k=k,...)
+        tempCut <- tryCatch(
+          {cutfun(tempData, k=k,...)},
+          error=function(e){return(setNames(rep(NA,ncol(tempData)),colnames(tempData)))})
+
         tempMatch <- matrix(0, nrow = N, ncol = N)
         rownames(tempMatch)<-colnames(data)
         colnames(tempMatch)<-colnames(data)
@@ -494,7 +513,7 @@ consensusCluster<-function(data,scale=c("row","column","none"),method=c("bootstr
         for (i2 in 1:k) {
           for(samp1 in names(tempCut)){
             for(samp2 in names(tempCut)){
-              tempMatch[samp1, samp2] <- ifelse(tempCut[samp1]==tempCut[samp2],1,0)
+              tempMatch[samp1, samp2] <- ifelse(tempCut[samp1]==tempCut[samp2] & !is.na(tempCut[samp1]==tempCut[samp2]),1,0)
             }
           }
         }

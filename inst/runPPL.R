@@ -9,7 +9,7 @@ pplSetUp()
 load("exprSetup.RData")
 file.copy(system.file("exprCleanUp.Rmd",package = "expr"), "exprCleanUp.Rmd",overwrite=T)
 rmarkdown::render(
-  "exprCleanUp.Rmd", params = c(settings,metaHeaders[names(metaHeaders)!="headerRm"]),
+  "exprCleanUp.Rmd", params = c(settings,metaHeaders[names(metaHeaders)!="headerRm"],list(forceCorrection=forceCorrection)),
   output_file = paste0("exprCleanUp", format(Sys.time(), "%B%d%Y"),".html",collapse = "")
 )
 file.remove("exprCleanUp.Rmd")

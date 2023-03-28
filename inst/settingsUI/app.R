@@ -36,6 +36,7 @@ ui <- navbarPage("expr-SetUp: inputs and parameters",
                     options = list(`live-search` = TRUE)),
         pickerInput("batch", "Used for batch correction - reference umaps", choices = c(NA),
                     options = list(`live-search` = TRUE)),
+        switchInput("forceCorrection","Force batch correction", value = FALSE, size = "mini"),
 
         tags$hr(style = "border-top: 1px solid #ccc;"),
         tags$h5("Set parameters for dataset cleanup.", style="color:#505050"),
@@ -215,7 +216,7 @@ server <- function(input, output, session) {
     # DT updated metadata
     output$sampleAttrDT=renderDT({
       format(sampleAttr_updated(),nsmall=2) %>%
-        DT::datatable(options = list(scrollX=T,scrollY=T),rownames = F)
+        DT::datatable(options = list(scrollX=T,scrollY="750px",scrollCollapse=T),rownames = F)
     })
 
     #update plot inputs
@@ -261,7 +262,8 @@ server <- function(input, output, session) {
       sampleAttr=sampleAttr_updated()
       settings=cleanUpSet()
       metaHeaders=metaHeaders()
-      save(sampleAttr,expressions,settings,metaHeaders,file="exprSetup.RData")
+      forceCorrection=input$forceCorrection
+      save(sampleAttr,expressions,settings,metaHeaders,forceCorrection,file="exprSetup.RData")
       stopApp()
     })
     # session$onSessionEnded(function() {

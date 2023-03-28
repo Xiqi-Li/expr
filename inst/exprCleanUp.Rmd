@@ -12,6 +12,7 @@ output:
     lightbox: false
 params:
   batch: APOLLO_COHORT
+  forceCorrection: FALSE
   OS: Overall_Survival
   vital_status: Vital_Status
   PFS: Progression-free_survival
@@ -141,7 +142,7 @@ t2
 In this step, genes with higher variance across data set and a fill rate greater than 0.75 are used for unsupervised analysis.
 ```{r data-load}
 
-rm(list = setdiff(ls(),c(lsf.str(), grep("clean|protein_coding_gene_info|0",ls(),value = T))))
+rm(list = setdiff(ls(),c(lsf.str(), grep("clean|protein_coding_gene_info|0|params",ls(),value = T))))
 
 # set param
 paramInput=data.frame(method="MAD",mad_top_n = 1000,remove_outlier = F)
@@ -254,8 +255,9 @@ matched=any(hits)==T
 batch_effect_exist=all(matched,good)
 cat(sprintf("Clustering good?: **%s**<br>
             Clustering matched?: **%s**<br>
-            Batch effect exists: **%s**<br>",good,matched,batch_effect_exist))
-
+            Batch effect exists: **%s**<br>
+            Force correction: **%s**<br>",good,matched,batch_effect_exist,params$forceCorrection))
+batch_effect_exist=batch_effect_exist|params$forceCorrection
 ```
 
 ## Batch effect correction

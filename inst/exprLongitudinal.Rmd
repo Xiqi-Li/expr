@@ -99,7 +99,7 @@ tpheader=grep("tim.*point|TP",ignore.case = T,colnames(clean_RNA_sample_info),va
 clean_RNA_sample_info[,tpheader]=gsub("[-_ \t\n\r\v\f]","",clean_RNA_sample_info[,tpheader])
 
 paired_RNA_sample_info=clean_RNA_sample_info[clean_RNA_sample_info$MRNsurr%in%names(which(table(clean_RNA_sample_info$MRNsurr)>1)),] %>% arrange(time_point)%>%arrange(order(gtools::mixedorder(MRNsurr)))
-DGE=DGE.DT=DGE.plots=volcanoPlots=gseaRess=gseaRes.sig=gseaPlots=list()
+DGE=DGE.DT=DGE.plots=volcanoPlots=gseaRess=gseaRes.sig=split_groups=gseaPlots=list()
 ```
 
 ## Data set summarized by time point
@@ -177,7 +177,7 @@ if(phenotype=="group_comparison"){
     method ="limma_trend")
   sink()
 }
-
+split_groups[[phenotype]]=setNames(group[[phenotype]],group[["Sample_ID"]])
 
 # format stats table
 stats=comp_limma$statistics %>% arrange(get(sprintf("%s:P.Value",contrast)))
@@ -288,7 +288,7 @@ tabs <- lapply(phenotypes, function(name) {
     gseaRes.sig[[name]]
     )))
 })
-
+save(gseaRess,pathway,DGE,split_groups,file = sprintf("gsea_%s.RData","TPgroup"))
 tagList(do.call(shiny::tabsetPanel, tabs))
 ```
 
@@ -306,6 +306,7 @@ log2_expressions=delta_log2_expressions
 clean_RNA_sample_info.0=clean_RNA_sample_info
 clean_RNA_sample_info=paired_pt_info
 clean_RNA_sample_info$Sample_ID=rownames(clean_RNA_sample_info)
+save(delta_log2_expressions,paired_pt_info,file = sprintf("delta_log2.RData"))
 ```
 
 ### Unsupervised clustering
@@ -492,7 +493,7 @@ cat.phenotype=cat.phenotype[!is.na(tmp)& tmp!="NA"]
 
 load(system.file("extdata/pathway.nano_hallmarkv2022.1.RData",package = "expr"))
 load(system.file("extdata/protein_coding_ensemble2symbol.RData",package = "expr"))
-paramStr=comps_limma=DGE=DGE.plots=DGE.DT=volcanoPlots=gseaRes=gseaRes.sig=gseaPlots=list()
+paramStr=comps_limma=DGE=DGE.plots=DGE.DT=volcanoPlots=gseaRess=split_groups=gseaRes.sig=gseaPlots=list()
 for (phenotype in names(cat.phenotype)){
   
   # set group factor
@@ -506,6 +507,7 @@ for (phenotype in names(cat.phenotype)){
     dimnames(group)=list(rownames(clean_RNA_sample_info),phenotype)
     contrast="Long-Short"
     paramStr[[phenotype]]=sprintf("Spliting threshold: %s ",format(thresh,nsmall=3))
+    split_groups[[phenotype]]=setNames(group[[phenotype]],rownames(group))
     }
   if (phenotype %in% c("Response")){
     if(cat.phenotype[phenotype]=="stable disease as good response"){
@@ -526,6 +528,7 @@ for (phenotype in names(cat.phenotype)){
       paramStr[[phenotype]]=sprintf("Spliting threshold: %s ",format(0,nsmall=3))
     }
     contrast="Good-Bad"
+    split_groups[[phenotype]]=setNames(group[[phenotype]],rownames(group))
   }
   
   # DGE
@@ -600,7 +603,7 @@ for (phenotype in names(cat.phenotype)){
   rank=stats %>% #filter(p_value<0.05,abs(Difference_of_means)>paramss$meanDiff.thresh) %>%
     arrange(get(sprintf("%s:logFC",contrast))) %>% select(sprintf("%s:logFC",contrast)) %>%
     tibble::rownames_to_column("x") %>% tibble::deframe()
-  gseaRes<-fgsea(
+  gseaRess[[phenotype]]=gseaRes=fgsea(
     pathways=pathway,
     stats=rank,
     minSize = min(sapply(pathway, length)),
@@ -624,6 +627,7 @@ for (phenotype in names(cat.phenotype)){
   
   
 }
+save(gseaRess,pathway,DGE,split_groups,file = sprintf("gsea_%s.RData","delta"))
 
 # tabs
 img.gsea=lapply(gseaPlots, function(x) {
