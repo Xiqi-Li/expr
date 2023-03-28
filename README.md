@@ -116,3 +116,29 @@ runExprPPL()
   - `Error in (function (..., row.names = NULL, check.rows = FALSE, check.names = TRUE,  : arguments imply differing number of rows: 2, 0`
 2. In function `consensusCluster()` Fixed below error by using tryCatch: 
   - `Error in rep(1:k, times = sapply(apclust_clusters@clusters, length)) : invalid 'times' argument.`
+  
+## Notes 3/28/2023
+
+**Functions**
+- Added unexported partial correlation graph functions (ridge and/or glasso).
+- Added functions for “zoomed-in pathway view” app
+- Changes in zscoreData functions for data.frame objects
+
+**Edits**
+Removed example dataset.
+
+**Pipeline**
+- Added forceCorrection option. Introduced changes in `settingsUI/app.R`, `exprCleanUp.Rmd`, `exprMain.Rmd` and `runPPL.R`.
+- Added steps to save GSEA and DGE results in main module and longitudinal module.
+- Changed default number of clusters to NA in main module.
+- Fixed "clean_batchexamined_logRNA.RData" dataset output for main module.
+- Added text annotation to specify splitting threshold.
+- Added “zoomed-in pathway view” app.
+
+**Fixed**
+- Fixed error in `apclusterCluster`: When k=4 but apcluster separated all samples into 5 clusters, parameter `times` do not match length of x. Fixed by `x=1:length(apclust_clusters@clusters)`. 
+- Fixed error in `multiCluster`: `unable to find an inherited method for function ‘affinMult’ for signature ‘"rbfkernel", "numeric"’`. Fixed by: 1) Line505 `tryCatch`; 2) Line516 `!is.na(tempCut[samp1]==tempCut[samp2])`
+
+
+
+ 
