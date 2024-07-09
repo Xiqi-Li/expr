@@ -2,8 +2,11 @@ Package: expr
 Type: Package
 Title: Prepare Clean RNA Sample Info And Expression Matrices
 Version: 0.1.0
-Author: hzhu2 [aut, cre]
-Maintainer: Haifeng Zhu <hzhu2@mdanderson.org>
+Authors@R:
+  c(person(given = "Xiqi",family="Li",role=c("aut","cre"),
+            email="xli23@mdanderson.org"),
+    person(given = "Haifeng",family="Zhu",role="aut"))
+Maintainer: Xiqi Li <xli23@mdanderson.org>
 Description: The package provides functions to clean up RNA sample info and expression matrices.
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -11,11 +14,12 @@ LazyData: true
 RoxygenNote: 7.2.3
 Suggests: knitr, rmarkdown, DT, htmltools, kableExtra
 VignetteBuilder: knitr
-Imports: ComplexHeatmap, PCAtools, RColorBrewer, Rtsne, ggplot2,
-        ggplotify, goeveg, gridExtra, ordinal, pheatmap, plotly, umap,
+Imports: ComplexHeatmap, PCAtools, RColorBrewer, Rtsne, 
+	goeveg,  ordinal, pheatmap, umap,
         immunedeconv, plotly, assertthat, plyranges, rtracklayer,
         ADAPTS, DESeq2, DeconRNASeq, EPIC, MCL, NMF, apcluster, cluster,
         cols4all, corto, dbscan, dplyr, 
-        ggcorrplot, ggpubr, kernlab, kohonen, mclust, skmeans,
-        statmod, xCell,limma, sva, future.apply
-        
+        kernlab, kohonen, mclust, skmeans,
+        statmod, xCell,limma, sva, future.apply,
+	gridExtra, ggplot2, ggplotify, plotly, ggcorrplot, ggpubr , igraph
+

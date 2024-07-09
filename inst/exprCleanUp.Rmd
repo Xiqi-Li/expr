@@ -161,8 +161,11 @@ unsupervised_data<-prepare_unsupervised_data(
 ```{r batch-effect-visualization, fig.show='hide'}
 
 # run analysis
+  umap.config=umap.defaults
+  umap.config$n_neighbors=round(ncol(unsupervised_data)/2)
+
 labels=as.factor(clean_RNA_sample_info$batch)
-unsupervised_results=unsupervised_analysis(unsupervised_data,labels = labels,
+unsupervised_results=unsupervised_analysis(unsupervised_data,labels = labels,umap_config = umap.config,
                                            cols = setNames(cols4all::c4a("dark24",nlevels(labels)),levels(labels)))
 
 # generate plots
@@ -263,18 +266,19 @@ batch_effect_exist=batch_effect_exist|params$forceCorrection
 ## Batch effect correction
 If batch effect exist, attempt to use `limma` and `COMBAT` to correct such effect
 ```{r batch-effect-correction}
-unsupervised_resultss=list()
+  umap.config=umap.defaults
+  umap.config$n_neighbors=round(ncol(log2_clean_protein_expressions)/2)
 if(batch_effect_exist){
   #limma
   limma_rbe_log2_protein_expressions<-limma::removeBatchEffect(
     log2_clean_protein_expressions,batch=clean_RNA_sample_info$batch)
   uns_limma_rbe_log2_protein_expressions<-prepare_unsupervised_data(limma_rbe_log2_protein_expressions,method="MAD",mad_top_n=1000)
   labels=as.factor(clean_RNA_sample_info$batch)
-  unsupervised_resultss[["limma"]]=unsupervised_analysis(uns_limma_rbe_log2_protein_expressions,labels=labels,cols = setNames(cols4all::c4a("dark24",nlevels(labels)),levels(labels)))
+  unsupervised_resultss[["limma"]]=unsupervised_analysis(uns_limma_rbe_log2_protein_expressions,labels=labels,umap_config = umap.config,cols = setNames(cols4all::c4a("dark24",nlevels(labels)),levels(labels)))
   #combat
   combat_rbe_log2_protein_expressions<-sva::ComBat(log2_clean_protein_expressions,batch=clean_RNA_sample_info$batch)
   uns_combat_rbe_log2_protein_expressions<-prepare_unsupervised_data(combat_rbe_log2_protein_expressions,method="MAD",mad_top_n=1000)
-  unsupervised_resultss[["combat"]]=unsupervised_analysis(uns_combat_rbe_log2_protein_expressions,labels=labels,cols = setNames(cols4all::c4a("dark24",nlevels(labels)),levels(labels)))
+  unsupervised_resultss[["combat"]]=unsupervised_analysis(uns_combat_rbe_log2_protein_expressions,labels=labels,umap_config = umap.config,cols = setNames(cols4all::c4a("dark24",nlevels(labels)),levels(labels)))
 
 
 # generate plots

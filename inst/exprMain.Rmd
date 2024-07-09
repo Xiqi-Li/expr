@@ -95,6 +95,7 @@ require(DT)
 
 load("clean_batchexamined_logRNA.RData")
 load("exprSetup.RData")
+if(!all(is.na(clean_RNA_sample_info$best_response_perc))) {clean_RNA_sample_info$best_response_perc=as.numeric(clean_RNA_sample_info$best_response_perc)}
 w.dir <- getwd()
 ```
 
@@ -127,7 +128,7 @@ rm(list = setdiff(ls(),c("params","clean_RNA_sample_info","log2_expressions","me
 
 ## select baseline sample or sample at first collection
 if(metaHeaders$time_point!="NA"&(!is.na(metaHeaders$time_point))){
-  tpheader=grep("tim.*point|TP",ignore.case = T,colnames(clean_RNA_sample_info),value = T)
+  tpheader="time_point"
   clean_RNA_sample_info[,tpheader]=gsub("[-_ \t\n\r\v\f]","",clean_RNA_sample_info[,tpheader])
   clean_RNA_sample_info=clean_RNA_sample_info %>% arrange(MRN,time_point)
   clean_RNA_sample_info=clean_RNA_sample_info[!duplicated(clean_RNA_sample_info$MRN),]
@@ -408,6 +409,26 @@ cat.phenotype=setNames(c(params$OS_thresh,params$PFS_thresh,params$response_thre
 tmp=c(metaHeaders$OS,metaHeaders$PFS,metaHeaders$best_response)
 cat.phenotype=cat.phenotype[!is.na(tmp)& tmp!="NA"]
 
+#read oncokb
+oncoKB=read.csv(system.file("extdata/cancerGeneList_oncoKB_lastupdate05192023.tsv",package="expr"),sep = "\t",header = T,check.names = F)
+rownames(oncoKB)=oncoKB$`Hugo Symbol`
+oncoKB=oncoKB%>%mutate(
+    `Is Oncogene`=replace(`Is Oncogene`,`Is Oncogene`=="Yes",T),
+    `Is Oncogene`=replace(`Is Oncogene`,`Is Oncogene`=="No",F),
+    `Is Oncogene`=as.logical(`Is Oncogene`),
+    `Is Tumor Suppressor Gene`=replace(`Is Tumor Suppressor Gene`,`Is Tumor Suppressor Gene`=="Yes",T),
+    `Is Tumor Suppressor Gene`=replace(`Is Tumor Suppressor Gene`,`Is Tumor Suppressor Gene`=="No",F),
+    `Is Tumor Suppressor Gene`=as.logical(`Is Tumor Suppressor Gene`),
+    `OncoKB Annotated`=replace(`OncoKB Annotated`,`OncoKB Annotated`=="Yes",T),
+    `OncoKB Annotated`=replace(`OncoKB Annotated`,`OncoKB Annotated`=="No",F),
+    `OncoKB Annotated`=as.logical(`OncoKB Annotated`)
+    )
+#read cancer gene census
+cancerGeneCensus=read.csv(system.file("extdata/concensus_Census_allWed_Jan_18_20_33_56_2023.tsv",package="expr"),sep = "\t",header = T,check.names = F)
+rownames(cancerGeneCensus)=cancerGeneCensus$`Gene Symbol`
+cancerGeneCensus$Hallmark=cancerGeneCensus$Hallmark %>% replace(.,.=="Yes",T) %>% replace(.,.=="",F) %>% as.logical()
+
+#load pathways
 load(system.file("extdata/pathway.nano_hallmarkv2022.1.RData",package = "expr"))
 load(system.file("extdata/protein_coding_ensemble2symbol.RData",package = "expr"))
 paramStr=comps_limma=DGE=DGE.plots=DGE.DT=volcanoPlots=gseaRes=gseaRess=split_groups=gseaRes.sig=gseaPlots=list()
@@ -464,16 +485,30 @@ for (phenotype in names(cat.phenotype)){
   # format stats table
   stats=comp_limma$statistics %>% arrange(get(sprintf("%s:P.Value",contrast)))
   stats=cbind(stats,protein_coding_ensemble2symbol[match(rownames(stats),protein_coding_ensemble2symbol$Gene_Symbol),-1])
+  
+  tmp=apply(oncoKB[stats$Gene_Symbol,c("OncoKB Annotated","Is Oncogene","Is Tumor Suppressor Gene")], 1, function(x) {
+    x[1]=!x[1]
+    paste(c("not annotated","oncogene","TSG")[x],collapse = "; ")})
+  tmp=tmp %>% replace(.,.=="NA; NA; NA",NA) %>% replace(.,.=="","other")
+  stats=cbind(stats,oncoKB=tmp)
+  tmp=apply(cancerGeneCensus[stats$Gene_Symbol,c("Tier","Hallmark")], 1, function(x)
+    paste(paste("Tier",x[1],sep=""),"Hallmark"[x[2]]))
+  tmp=tmp %>% replace(.,.=="TierNA NA",NA) %>% trimws()
+  stats=cbind(stats,cancerGeneCensus=tmp)
+  
   DGE[[phenotype]]=stats
   sigRow=stats[[sprintf("%s:P.Value",contrast)]]<0.05 & abs(stats[[sprintf("%s:logFC",contrast)]])>params$DGE_logFC_thresh
-  DGE.DT[[phenotype]]= stats[sigRow,] %>% format(digits=2)  %>% 
-    DT::datatable(options = list(
+  DGE.DT[[phenotype]]= stats[sigRow,] %>% 
+    DT::datatable(
+      filter = "top",
+      options = list(
       # scrollX=T,scrollY=T,
         initComplete = JS("function(settings, json) {","$(this.api().table().header()).css({'font-size': '12px'});","}")),
       # caption = htmltools::tags$caption(
       #   style = 'caption-side: top; text-align: left; color:black; font-size:150% ;',
       #             sprintf("DGE on %s: %s",phenotype,contrast))
       ) %>%
+    DT::formatRound(columns = names(which(sapply(.$x$data,is.numeric))), digits = 2)%>%
     DT::formatStyle(columns = colnames(.$x$data), `font-size` = '12px')
   # box plots
   if(sum(sigRow)>0){
@@ -527,13 +562,14 @@ for (phenotype in names(cat.phenotype)){
     minSize = min(sapply(pathway, length)),
     gseaParam = 1)
   gseaRes.sig[[phenotype]]=gseaRes %>% filter(pval<0.05) %>% arrange(pval) %>% 
-    format(digits=2)  %>% 
     DT::datatable(
+      filter = "top",
       options = list(
         # scrollX=T,scrollY=T,
         initComplete = JS("function(settings, json) {","$(this.api().table().header()).css({'font-size': '12px'});","}")),
     rownames = FALSE,
     ) %>% 
+    DT::formatRound(columns = names(which(sapply(.$x$data,is.numeric))), digits = 2)%>%
     formatStyle(columns = colnames(.$x$data), `font-size` = '12px')
 
   # generate gsea plots

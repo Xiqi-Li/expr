@@ -22,7 +22,7 @@ getHeatMapAnnotation=function(sampleAttr,data_mx=NULL,nGroupMax=10,essentialOnly
     sampleAttr=sampleAttr[,tracks]
   }
   feature.names=apply(sampleAttr, c(2), function(x) length(table(x)))
-  feature.names=feature.names[sapply(sampleAttr[names(feature.names)],is.numeric)|(feature.names<=nGroupMax&feature.names>1)]
+  feature.names=feature.names[sapply(sampleAttr[names(feature.names)],is.numeric)|(feature.names<=nGroupMax&feature.names>=1)]
   feature.names=names(feature.names)
   feature.names.surr=tolower(setNames(gsub("[-_ \t\n\r\v\f]","",feature.names),feature.names))
   if(essentialOnly){

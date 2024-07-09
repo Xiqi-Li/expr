@@ -175,7 +175,7 @@ server <- function(input, output, session) {
   observeEvent(input$data_file, {
     load(input$data_file$datapath)
     # define class of ID attributes
-    coerce_ind=names(which(sapply(sampleAttr[grep("ID|MRN",colnames(sampleAttr))],is.numeric)))
+    coerce_ind=names(which(sapply(sampleAttr[grep("ID|MRN",colnames(sampleAttr),ignore.case = T)],is.numeric)))
     if(length(coerce_ind)>0){
       for(ind in coerce_ind){
         sampleAttr[,coerce_ind]=as.character(sampleAttr[,coerce_ind])

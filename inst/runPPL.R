@@ -22,9 +22,9 @@ if(metaHeaders$time_point!="NA"&!is.na(metaHeaders$time_point)){
 }else{
   titleStr=""
 }
-OSthresh=tryCatch({format(quantile(sampleAttr[,"OS"],na.rm=T,probs=c(0,0.5,1)),digits=2)},
+OSthresh=tryCatch({format(quantile(clean_RNA_sample_info[,"OS"],na.rm=T,probs=c(0,0.5,1)),digits=2)},
   error=function(e){return(c(NA,NA,NA))})
-PFSthresh=tryCatch({format(quantile(sampleAttr[,"PFS"],na.rm=T,probs=c(0,0.5,1)),digits=2)},
+PFSthresh=tryCatch({format(quantile(clean_RNA_sample_info[,"PFS"],na.rm=T,probs=c(0,0.5,1)),digits=2)},
                   error=function(e){return(c(NA,NA,NA))})
 tracks.d=c("OS","vital_status","PFS","event_for_progression","best_response_perc","time_point","gender","best_response")[
   c("OS","vital_status","PFS","event_for_progression","best_response_perc","time_point","gender","best_response") %in% colnames(clean_RNA_sample_info)]
