@@ -100,6 +100,7 @@ unsupervised_analysis<-function(dat,labels,cols,scale=c("row","column","none"),r
     # library(gg3D) # XL
     library(PCAtools)
     require(plotly)
+    #devtools::install_github("Bioconductor/MatrixGenerics")
     pca_res<-do.call(PCAtools::pca,c(list(mat=t(dat)),pca_params)) #XL
     loadings<-data.frame(pca_res$loadings)
     colnames(loadings)<-paste("L",1:ncol(loadings),sep="")
@@ -119,7 +120,7 @@ unsupervised_analysis<-function(dat,labels,cols,scale=c("row","column","none"),r
 
 
   if(run_mds){
-    distances<-dist(t(dat))
+    distances<-stats::dist(t(dat))
     fit_mds<-do.call(cmdscale,c(list(d=distances,eig = T,k=2),mds_params))
     points<-data.frame(fit_mds$points)
     colnames(points)<-paste("P",1:ncol(points),sep="")

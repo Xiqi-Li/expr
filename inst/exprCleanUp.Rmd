@@ -100,7 +100,7 @@ SumInfo=t(data.frame(
   `Number_of_Deleted_Samples`=dim(results$marked_ori_RNA_sample_info)[1]-dim(results$clean_RNA_sample_info)[1],
   paramInput[,grep("factor|threshold",colnames(paramInput))],
   Notes=capture.output(grep("too many low expression genes",consoleOutput,value = T),type = c("output"))))# when no samples were deleted
-t1=knitr::kable(SumInfo,caption = "Data loading summary")%>%kableExtra::kable_styling(position = "center",font_size = "200%")
+t1=kableExtra::kbl(SumInfo,caption = "Data loading summary")%>%kableExtra::kable_styling(position = "center",font_size = "200%")
 
 
 # cleaned RNA sample info
@@ -161,7 +161,7 @@ unsupervised_data<-prepare_unsupervised_data(
 ```{r batch-effect-visualization, fig.show='hide'}
 
 # run analysis
-  umap.config=umap.defaults
+  umap.config=umap::umap.defaults
   umap.config$n_neighbors=round(ncol(unsupervised_data)/2)
 
 labels=as.factor(clean_RNA_sample_info$batch)
@@ -266,8 +266,10 @@ batch_effect_exist=batch_effect_exist|params$forceCorrection
 ## Batch effect correction
 If batch effect exist, attempt to use `limma` and `COMBAT` to correct such effect
 ```{r batch-effect-correction}
-  umap.config=umap.defaults
+require(umap)
+  umap.config=umap::umap.defaults
   umap.config$n_neighbors=round(ncol(log2_clean_protein_expressions)/2)
+  unsupervised_resultss=list()
 if(batch_effect_exist){
   #limma
   limma_rbe_log2_protein_expressions<-limma::removeBatchEffect(

@@ -192,7 +192,7 @@ ccC=cutree(a,optK)
 ```
 
 ```{r clustering-plots,out.width="100%",fig.height=7,fig.width=10,results="asis"}
-t(InputParams) %>% knitr::kable(align = "ll",caption = "consensus clustering settings") %>% kableExtra::kable_styling("striped")
+t(InputParams) %>% kableExtra::kbl(align = "ll",caption = "consensus clustering settings") %>% kableExtra::kable_styling("striped")
 
 plotTag(result$rand.plot, "rand similarity", width = 500, height = 500, pixelratio=3)
 
@@ -255,7 +255,7 @@ for (duration in names(censoring)){
   stats=cbind(HR,`p.logrank`=na.omit(as.vector(logRankTest.pw)) %>% format(digits=2))
   stats=rbind(stats,overall=c(NA,NA,NA,logRankTest.oa%>% format(digits=2)))
   # stats.str=readr::format_delim(stats %>% as.data.frame%>% tibble::rownames_to_column("pair"),delim = "\t")
-  stats.str=capture.output(stats %>% as.data.frame%>%knitr::kable("simple",align = 'c'))
+  stats.str=capture.output(stats %>% as.data.frame%>%kableExtra::kbl("simple",align = 'c'))
   stats.str=paste(stats.str[stats.str!=""&!grepl("-----",stats.str)],collapse = "\n")
   ggsurv=ggsurvplot(fit, data = clean_RNA_sample_info,
            palette =cols4all::c4a(palette = "Dark24",n=optK),

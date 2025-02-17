@@ -178,7 +178,7 @@ server <- function(input, output, session) {
     coerce_ind=names(which(sapply(sampleAttr[grep("ID|MRN",colnames(sampleAttr),ignore.case = T)],is.numeric)))
     if(length(coerce_ind)>0){
       for(ind in coerce_ind){
-        sampleAttr[,coerce_ind]=as.character(sampleAttr[,coerce_ind])
+        sampleAttr[,coerce_ind]=apply(sampleAttr[,coerce_ind],2,as.character)
       }}
 
     choices=colnames(sampleAttr)
