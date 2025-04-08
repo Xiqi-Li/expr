@@ -26,3 +26,15 @@ NULL
 #' @keywords data
 NULL
 
+#' hg19 ncbi protein coding gene info
+#'
+#' @name immune_cell_type_markers
+#' @docType data
+#' @keywords data
+#' @description
+#' PMID: 27372732
+#'
+NULL
+
+
+
